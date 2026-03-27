@@ -642,18 +642,22 @@
     aggiornaUI();
   }
 
+  /* CORRETTO: CIMA = unshift */
   function azioneCima(){
     var c = getSelected();
     if(!c){ alert("Seleziona una carta"); return; }
-    mazzo.push(removeSelected());
+
+    mazzo.unshift(removeSelected());
     deseleziona();
     aggiornaUI();
   }
 
+  /* CORRETTO: FONDO = push */
   function azioneFondo(){
     var c = getSelected();
     if(!c){ alert("Seleziona una carta"); return; }
-    mazzo.unshift(removeSelected());
+
+    mazzo.push(removeSelected());
     deseleziona();
     aggiornaUI();
   }
