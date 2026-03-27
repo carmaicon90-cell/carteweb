@@ -215,6 +215,23 @@
     .cardBack.selected{
       border:3px solid gold;
     }
+
+    #chatArea{
+      text-align:left;
+      max-height:250px;
+      overflow-y:auto;
+      font-size:14px;
+      color:#ccc;
+      padding:6px;
+      border-radius:12px;
+      background:#0d0d0d;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    #chatInput{
+      width:75%;
+      max-width:320px;
+    }
   </style>
 </head>
 
@@ -240,6 +257,7 @@
 <div class="zone">
   <div class="title">AZIONI HOST</div>
   <button onclick="resetRoomForAll()" class="redBtn">RESET STANZA PER TUTTI</button>
+  <button onclick="pulisciLog()" class="redBtn">PULISCI LOG</button>
   <div class="info" id="hostInfo">Host: No</div>
 </div>
 
@@ -313,13 +331,20 @@
 </div>
 
 <div class="playersBox">
+  <div class="title">💬 CHAT STANZA</div>
+  <div id="chatArea"></div>
+  <input id="chatInput" placeholder="Scrivi un messaggio...">
+  <button onclick="inviaChat()" class="greenBtn">Invia</button>
+</div>
+
+<div class="playersBox">
   <div class="title">ALTRI GIOCATORI (VEDI SOLO PUBBLICO)</div>
   <div id="playersArea"></div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, onDisconnect, update, push } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, onDisconnect, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
   const firebaseConfig = {
@@ -372,19 +397,16 @@
 
   function coloreDaUID(uid, isHostPlayer){
     if(isHostPlayer) return "#FFD700";
-
     let hash = 0;
     for(let i=0;i<uid.length;i++){
       hash = uid.charCodeAt(i) + ((hash << 5) - hash);
     }
-
     const hue = Math.abs(hash) % 360;
     return `hsl(${hue}, 80%, 60%)`;
   }
 
   async function aggiungiLog(testo){
     if(!roomId || !uid) return;
-
     await push(ref(db, `rooms/${roomId}/logs`), {
       testo: testo,
       nickname: nickname || "Sconosciuto",
@@ -392,6 +414,35 @@
       time: Date.now()
     });
   }
+
+  async function inviaChat(){
+    const msg = document.getElementById("chatInput").value.trim();
+    if(!msg){
+      alert("Scrivi un messaggio!");
+      return;
+    }
+
+    document.getElementById("chatInput").value = "";
+
+    await push(ref(db, `rooms/${roomId}/chat`), {
+      testo: msg,
+      nickname: nickname || "Sconosciuto",
+      uid: uid,
+      time: Date.now()
+    });
+  }
+  window.inviaChat = inviaChat;
+
+  async function pulisciLog(){
+    if(!isHost){
+      alert("Solo host può pulire il log!");
+      return;
+    }
+
+    await remove(ref(db, `rooms/${roomId}/logs`));
+    await aggiungiLog("ha pulito il LOG");
+  }
+  window.pulisciLog = pulisciLog;
 
   function creaMazzo(){
     const suits = ["H","D","C","S"];
@@ -665,25 +716,6 @@
     });
   }
 
-  async function hostTogglePrimaria(playerUid, scopri){
-    if(!roomId) return;
-
-    if(!isHost){
-      alert("Solo l'host può farlo!");
-      return;
-    }
-
-    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
-      primariaCoperta: !scopri
-    });
-
-    if(playerUid === uid){
-      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la propria PRIMARIA");
-    } else {
-      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la PRIMARIA di un giocatore");
-    }
-  }
-
   function aggiornaUI(){
     document.getElementById("mano").innerHTML = "";
     document.getElementById("scarti").innerHTML = "";
@@ -708,21 +740,31 @@
       } else {
         document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
       }
-    }
 
-    if(isHost && primaria){
-      const btnShow = document.createElement("button");
-      btnShow.textContent = "Scopri Primaria";
-      btnShow.className = "greenBtn";
-      btnShow.onclick = () => hostTogglePrimaria(uid, true);
+      if(isHost){
+        const btnShow = document.createElement("button");
+        btnShow.textContent = "Scopri Primaria";
+        btnShow.className = "greenBtn";
+        btnShow.onclick = async () => {
+          primariaCoperta = false;
+          await salvaPubblico();
+          await aggiungiLog("ha scoperto la propria PRIMARIA");
+          aggiornaUI();
+        };
 
-      const btnHide = document.createElement("button");
-      btnHide.textContent = "Copri Primaria";
-      btnHide.className = "redBtn";
-      btnHide.onclick = () => hostTogglePrimaria(uid, false);
+        const btnHide = document.createElement("button");
+        btnHide.textContent = "Copri Primaria";
+        btnHide.className = "redBtn";
+        btnHide.onclick = async () => {
+          primariaCoperta = true;
+          await salvaPubblico();
+          await aggiungiLog("ha coperto la propria PRIMARIA");
+          aggiornaUI();
+        };
 
-      document.getElementById("primaria").appendChild(btnShow);
-      document.getElementById("primaria").appendChild(btnHide);
+        document.getElementById("primaria").appendChild(btnShow);
+        document.getElementById("primaria").appendChild(btnHide);
+      }
     }
 
     if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
@@ -784,7 +826,10 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
-    await aggiungiLog("ha pescato " + pescate + " carte");
+
+    if(pescate > 0){
+      await aggiungiLog("ha pescato " + pescate + " carte");
+    }
   }
 
   function pescaN(){
@@ -808,7 +853,10 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
-    await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
+
+    if(scartate > 0){
+      await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
+    }
   }
 
   function scartaDalMazzoN(){
@@ -1035,6 +1083,19 @@
     alert("Stanza resettata per tutti!");
   }
 
+  async function hostTogglePrimaria(playerUid, scopri){
+    if(!isHost){
+      alert("Solo host!");
+      return;
+    }
+
+    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+      primariaCoperta: !scopri
+    });
+
+    await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
+  }
+
   async function joinRoom(){
     if(!uid){
       alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
@@ -1057,6 +1118,8 @@
       return;
     }
 
+    alreadyJoined = true;
+
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1073,6 +1136,8 @@
     isHost = (meta.hostUid === uid);
     hostUid = meta.hostUid;
 
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
+
     const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
     const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
 
@@ -1080,10 +1145,6 @@
       alert("Stanza piena (max 9 giocatori).");
       return;
     }
-
-    alreadyJoined = true;
-
-    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
 
     document.getElementById("roomInfo").innerHTML =
       "Connesso alla stanza: <b>" + roomId + "</b>";
@@ -1127,7 +1188,6 @@
       if(!snap.exists()) return;
 
       const pdata = snap.val();
-
       primaria = pdata.primaria || null;
       primariaCoperta = pdata.primariaCoperta ?? true;
       supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
@@ -1203,6 +1263,43 @@
       }
 
       logArea.scrollTop = logArea.scrollHeight;
+    });
+
+    onValue(ref(db, `rooms/${roomId}/chat`), (snap)=>{
+      const chatArea = document.getElementById("chatArea");
+      chatArea.innerHTML = "";
+
+      if(!snap.exists()){
+        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
+        return;
+      }
+
+      const msgs = snap.val();
+      const keys = Object.keys(msgs);
+
+      keys.sort((a,b)=>msgs[a].time - msgs[b].time);
+
+      for(const k of keys){
+        const m = msgs[k];
+
+        const d = new Date(m.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (m.uid === hostUid);
+        const col = coloreDaUID(m.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          💬 <b>${ora}</b> - 
+          <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: 
+          ${m.testo}
+        `;
+
+        chatArea.appendChild(div);
+      }
+
+      chatArea.scrollTop = chatArea.scrollHeight;
     });
 
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
