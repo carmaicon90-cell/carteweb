@@ -36,7 +36,6 @@
 
     button.redBtn{ background:#ff3333; }
     button.greenBtn{ background:#00aa66; }
-    button.grayBtn{ background:#444; }
 
     input{
       padding:8px;
@@ -175,7 +174,6 @@
       gap:8px;
       justify-content:center;
       flex-wrap:wrap;
-      margin-top:6px;
     }
 
     .smallCard{
@@ -276,7 +274,7 @@
 <div class="info" id="selezioneInfo"></div>
 
 <div class="zone">
-  <div class="title">PRIMARIA (PUBBLICA MA DI DEFAULT COPERTA)</div>
+  <div class="title">PRIMARIA (PUBBLICA)</div>
   <div class="cards" id="primaria"></div>
   <button onclick="mettiPrimaria()">Metti Primaria (da mano)</button>
 </div>
@@ -296,7 +294,9 @@
 </div>
 
 <div class="zone">
-  <div class="title">SCARTI (PRIVATI MA VISIBILI)</div>
+  <div class="title">SCARTI (PRIVATI)</div>
+  <button onclick="mostraScarti()" class="greenBtn">Mostra Scarti</button>
+  <button onclick="nascondiScarti()" class="redBtn">Nascondi Scarti</button>
   <div class="cards" id="scarti"></div>
 </div>
 
@@ -306,7 +306,7 @@
 </div>
 
 <div class="playersBox">
-  <div class="title">ALTRI GIOCATORI (PUBBLICO)</div>
+  <div class="title">ALTRI GIOCATORI (VEDI SOLO PUBBLICO)</div>
   <div id="playersArea"></div>
 </div>
 
@@ -330,39 +330,61 @@
   const db = getDatabase(app);
   const auth = getAuth(app);
 
-  let uid=null;
-  let roomId=null;
-  let nickname=localStorage.getItem("nickname")||"";
+  let uid = null;
+  let roomId = null;
+  let nickname = localStorage.getItem("nickname") || "";
 
-  let isHost=false;
-  let alreadyJoined=false;
+  let isHost = false;
+  let alreadyJoined = false;
 
-  let mazzo=[], mano=[], scarti=[];
-  let primaria=null;
-  let primariaCoperta=true; // NUOVO
-  let supporti={2:null,3:null,4:null,5:null};
+  let mazzo = [];
+  let mano = [];
+  let scarti = [];
 
-  let selezioni=[];
+  let primaria = null;
+  let primariaCoperta = true;
 
-  document.getElementById("nickname").value=nickname;
-  document.getElementById("nickInfo").innerText=nickname?("Nickname: "+nickname):"Nickname non impostato";
+  let supporti = {2:null,3:null,4:null,5:null};
+
+  let selezioni = [];
+
+  let scartiVisibili = false;
+
+  document.getElementById("nickname").value = nickname;
+  document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
 
   function salvaNickname(){
-    const n=document.getElementById("nickname").value.trim();
-    if(!n){ alert("Inserisci un nickname!"); return; }
-    nickname=n;
-    localStorage.setItem("nickname",nickname);
-    document.getElementById("nickInfo").innerText="Nickname: "+nickname;
+    const n = document.getElementById("nickname").value.trim();
+    if(!n){
+      alert("Inserisci un nickname!");
+      return;
+    }
+    nickname = n;
+    localStorage.setItem("nickname", nickname);
+    document.getElementById("nickInfo").innerText = "Nickname: " + nickname;
   }
-  window.salvaNickname=salvaNickname;
+  window.salvaNickname = salvaNickname;
+
+  function mostraScarti(){
+    scartiVisibili = true;
+    aggiornaUI();
+  }
+
+  function nascondiScarti(){
+    scartiVisibili = false;
+    aggiornaUI();
+  }
+
+  window.mostraScarti = mostraScarti;
+  window.nascondiScarti = nascondiScarti;
 
   function creaMazzo(){
-    const suits=["H","D","C","S"];
-    const values=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-    const m=[];
+    const suits = ["H","D","C","S"];
+    const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+    const m = [];
     for(let s of suits){
       for(let v of values){
-        m.push({valore:v,seme:s});
+        m.push({ valore: v, seme: s });
       }
     }
     return m;
@@ -370,8 +392,10 @@
 
   function shuffle(a){
     for(let i=a.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [a[i],a[j]]=[a[j],a[i]];
+      const j = Math.floor(Math.random()*(i+1));
+      const tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
     }
   }
 
@@ -384,21 +408,23 @@
   }
 
   function coloreClasse(seme){
-    if(seme==="H"||seme==="D") return "red";
+    if(seme==="H" || seme==="D") return "red";
     return "black";
   }
 
   function stessaSelezione(zona,index){
-    return selezioni.some(s=>s.zona===zona && s.index===index);
+    return selezioni.some(s => s.zona===zona && s.index===index);
   }
 
   function toggleSelezione(zona,index){
-    const pos=selezioni.findIndex(s=>s.zona===zona && s.index===index);
+    const pos = selezioni.findIndex(s => s.zona===zona && s.index===index);
     if(pos>=0) selezioni.splice(pos,1);
     else selezioni.push({zona,index});
   }
 
-  function clearSelezione(){ selezioni=[]; }
+  function clearSelezione(){
+    selezioni = [];
+  }
 
   function getCartaDaZona(zona,index){
     if(zona==="mano") return mano[index];
@@ -416,9 +442,9 @@
     if(zona==="scarti") return scarti.splice(index,1)[0];
 
     if(zona==="primaria"){
-      const c=primaria;
-      primaria=null;
-      primariaCoperta=true;
+      const c = primaria;
+      primaria = null;
+      primariaCoperta = true;
       return c;
     }
 
@@ -430,146 +456,162 @@
     return null;
   }
 
-  function creaCorner(v,className){
-    const corner=document.createElement("div");
-    corner.className="corner "+className;
-    corner.innerHTML=v;
+  function creaCorner(v, className){
+    const corner = document.createElement("div");
+    corner.className = "corner " + className;
+    corner.innerHTML = v;
     return corner;
   }
 
-  function creaPip(sym,x,y,rot){
-    const pip=document.createElement("div");
-    pip.className="pip";
-    pip.textContent=sym;
-    pip.style.left=x+"%";
-    pip.style.top=y+"%";
-    pip.style.transform="translate(-50%,-50%) rotate("+rot+"deg)";
+  function creaPip(sym, x, y, rot){
+    const pip = document.createElement("div");
+    pip.className = "pip";
+    pip.textContent = sym;
+    pip.style.left = x + "%";
+    pip.style.top = y + "%";
+    pip.style.transform = "translate(-50%,-50%) rotate(" + rot + "deg)";
     return pip;
   }
 
-  function aggiungiPips(div,valore,sym){
-    const layouts={
-      2:[[50,30,0],[50,78,180]],
-      3:[[50,28,0],[50,54,0],[50,80,180]],
-      4:[[30,28,0],[70,28,0],[30,80,180],[70,80,180]],
-      5:[[30,28,0],[70,28,0],[50,54,0],[30,80,180],[70,80,180]],
-      6:[[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180]],
-      7:[[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0]],
-      8:[[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0],[50,68,180]],
-      9:[[30,26,0],[70,26,0],[30,48,0],[70,48,0],[30,70,180],[70,70,180],[50,37,0],[50,60,180],[50,54,0]],
+  function aggiungiPips(div, valore, sym){
+    const layouts = {
+      2: [[50,30,0],[50,78,180]],
+      3: [[50,28,0],[50,54,0],[50,80,180]],
+      4: [[30,28,0],[70,28,0],[30,80,180],[70,80,180]],
+      5: [[30,28,0],[70,28,0],[50,54,0],[30,80,180],[70,80,180]],
+      6: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180]],
+      7: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0]],
+      8: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0],[50,68,180]],
+      9: [[30,26,0],[70,26,0],[30,48,0],[70,48,0],[30,70,180],[70,70,180],[50,37,0],[50,60,180],[50,54,0]],
       10:[[30,24,0],[70,24,0],[30,42,0],[70,42,0],[30,60,180],[70,60,180],[30,78,180],[70,78,180],[50,33,0],[50,69,180]]
     };
 
-    const pts=layouts[valore];
+    const pts = layouts[valore];
     if(!pts) return;
 
-    for(let p of pts){
-      div.appendChild(creaPip(sym,p[0],p[1],p[2]));
+    for(let i=0;i<pts.length;i++){
+      div.appendChild(creaPip(sym, pts[i][0], pts[i][1], pts[i][2]));
     }
   }
 
-  function creaFace(v,sym,col){
-    const box=document.createElement("div");
-    box.className="faceBox";
-    box.style.color=(col==="red")?"#d00000":"#000";
+  function creaFace(v, sym, col){
+    const box = document.createElement("div");
+    box.className = "faceBox";
+    box.style.color = (col==="red") ? "#d00000" : "#000";
 
-    const icon=document.createElement("div");
-    icon.className="icon";
-    if(v==="J") icon.textContent="⚔";
-    if(v==="Q") icon.textContent="♛";
-    if(v==="K") icon.textContent="♚";
+    const icon = document.createElement("div");
+    icon.className = "icon";
 
-    const letter=document.createElement("div");
-    letter.className="letter";
-    letter.textContent=v;
+    if(v==="J") icon.textContent = "⚔";
+    if(v==="Q") icon.textContent = "♛";
+    if(v==="K") icon.textContent = "♚";
 
-    const suit=document.createElement("div");
-    suit.className="suit";
-    suit.textContent=sym;
+    const letter = document.createElement("div");
+    letter.className = "letter";
+    letter.textContent = v;
+
+    const suit = document.createElement("div");
+    suit.className = "suit";
+    suit.textContent = sym;
 
     box.appendChild(icon);
     box.appendChild(letter);
     box.appendChild(suit);
+
     return box;
   }
 
   function creaCartaDiv(carta,zona,index,small=false){
-    const v=carta.valore;
-    const s=carta.seme;
-    const sym=simbolo(s);
-    const col=coloreClasse(s);
+    const v = carta.valore;
+    const s = carta.seme;
+    const sym = simbolo(s);
+    const col = coloreClasse(s);
 
-    const div=document.createElement("div");
-    div.className="card "+col;
+    const div = document.createElement("div");
+    div.className = "card " + col;
+
     if(small) div.classList.add("smallCard");
 
     if(zona!=="x"){
-      if(stessaSelezione(zona,index)) div.classList.add("selected");
-      div.onclick=function(){
+      if(stessaSelezione(zona,index)){
+        div.classList.add("selected");
+      }
+
+      div.onclick = function(){
         toggleSelezione(zona,index);
         aggiornaUI();
       };
     }
 
     if(v!=="A" && v!=="J" && v!=="Q" && v!=="K"){
-      div.appendChild(creaCorner(v,"top-left"));
-      div.appendChild(creaCorner(v,"bottom-right"));
-    }else{
-      const tl=document.createElement("div");
+      div.appendChild(creaCorner(v, "top-left"));
+      div.appendChild(creaCorner(v, "bottom-right"));
+    } else {
+      const tl = document.createElement("div");
       tl.className="corner top-left";
-      tl.innerHTML=v+"<br>"+sym;
+      tl.innerHTML = v + "<br>" + sym;
 
-      const br=document.createElement("div");
+      const br = document.createElement("div");
       br.className="corner bottom-right";
-      br.innerHTML=v+"<br>"+sym;
+      br.innerHTML = v + "<br>" + sym;
 
       div.appendChild(tl);
       div.appendChild(br);
     }
 
-    if(v==="J"||v==="Q"||v==="K"){
-      div.appendChild(creaFace(v,sym,col));
+    if(v==="J" || v==="Q" || v==="K"){
+      div.appendChild(creaFace(v, sym, col));
       return div;
     }
 
     if(v==="A"){
-      const big=document.createElement("div");
-      big.className="aceBig";
-      big.textContent=sym;
+      const big = document.createElement("div");
+      big.className = "aceBig";
+      big.textContent = sym;
       div.appendChild(big);
-      div.appendChild(creaPip(sym,50,32,0));
-      div.appendChild(creaPip(sym,50,78,180));
+
+      div.appendChild(creaPip(sym, 50, 32, 0));
+      div.appendChild(creaPip(sym, 50, 78, 180));
       return div;
     }
 
-    aggiungiPips(div,parseInt(v),sym);
+    const num = parseInt(v);
+    aggiungiPips(div, num, sym);
+
     return div;
   }
 
-  function creaCoperta(small=false){
-    const div=document.createElement("div");
-    div.className="cardBack";
-    if(small) div.classList.add("smallCard");
+  function creaCoperta(clickable=false, onClickFn=null){
+    const div = document.createElement("div");
+    div.className = "cardBack";
+
+    if(clickable){
+      div.style.border = "3px solid gold";
+      div.onclick = onClickFn;
+    }
+
     return div;
   }
 
   async function salvaPrivato(){
-    if(!roomId||!uid) return;
-    await set(ref(db,`rooms/${roomId}/private/${uid}`),{mazzo,mano,scarti});
+    if(!roomId || !uid) return;
+    await set(ref(db, `rooms/${roomId}/private/${uid}`), {
+      mazzo, mano, scarti
+    });
   }
 
   async function salvaPubblico(){
-    if(!roomId||!uid) return;
+    if(!roomId || !uid) return;
 
-    await update(ref(db,`rooms/${roomId}/public/${uid}`),{
+    await update(ref(db, `rooms/${roomId}/public/${uid}`), {
       primaria,
       primariaCoperta,
       supporti,
       nickname,
-      contatori:{
-        mazzo:mazzo.length,
-        mano:mano.length,
-        scarti:scarti.length
+      contatori: {
+        mazzo: mazzo.length,
+        mano: mano.length,
+        scarti: scarti.length
       }
     });
   }
@@ -580,45 +622,75 @@
   }
 
   function salvaPresenza(){
-    if(!roomId||!uid) return;
+    if(!roomId || !uid) return;
 
-    const presenceRef=ref(db,`rooms/${roomId}/presence/${uid}`);
-    const connectedRef=ref(db,".info/connected");
+    const presenceRef = ref(db, `rooms/${roomId}/presence/${uid}`);
+    const connectedRef = ref(db, ".info/connected");
 
-    onValue(connectedRef,(snap)=>{
-      if(snap.val()===true){
-        set(presenceRef,{
-          nickname:nickname||"Sconosciuto",
-          online:true,
-          lastSeen:Date.now()
+    onValue(connectedRef, (snap) => {
+      if(snap.val() === true){
+        set(presenceRef, {
+          nickname: nickname || "Sconosciuto",
+          online: true,
+          lastSeen: Date.now()
         });
 
         onDisconnect(presenceRef).set({
-          nickname:nickname||"Sconosciuto",
-          online:false,
-          lastSeen:Date.now()
+          nickname: nickname || "Sconosciuto",
+          online: false,
+          lastSeen: Date.now()
         });
       }
     });
   }
 
   function aggiornaUI(){
-    document.getElementById("mano").innerHTML="";
-    document.getElementById("scarti").innerHTML="";
-    document.getElementById("primaria").innerHTML="";
-    document.getElementById("supporti").innerHTML="";
+    document.getElementById("mano").innerHTML = "";
+    document.getElementById("scarti").innerHTML = "";
+    document.getElementById("primaria").innerHTML = "";
+    document.getElementById("supporti").innerHTML = "";
 
     for(let i=0;i<mano.length;i++){
       document.getElementById("mano").appendChild(creaCartaDiv(mano[i],"mano",i));
     }
 
     for(let j=0;j<scarti.length;j++){
-      document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
+      if(scartiVisibili){
+        document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
+      } else {
+        document.getElementById("scarti").appendChild(creaCoperta());
+      }
     }
 
     if(primaria){
-      // TU vedi sempre la tua primaria scoperta
-      document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+      if(primariaCoperta){
+        document.getElementById("primaria").appendChild(creaCoperta());
+      } else {
+        document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+      }
+
+      if(isHost){
+        const btnShow = document.createElement("button");
+        btnShow.textContent = "Scopri Primaria";
+        btnShow.className = "greenBtn";
+        btnShow.onclick = async () => {
+          primariaCoperta = false;
+          await salvaPubblico();
+          aggiornaUI();
+        };
+
+        const btnHide = document.createElement("button");
+        btnHide.textContent = "Copri Primaria";
+        btnHide.className = "redBtn";
+        btnHide.onclick = async () => {
+          primariaCoperta = true;
+          await salvaPubblico();
+          aggiornaUI();
+        };
+
+        document.getElementById("primaria").appendChild(btnShow);
+        document.getElementById("primaria").appendChild(btnHide);
+      }
     }
 
     if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
@@ -626,21 +698,21 @@
     if(supporti[4]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[4],"sup4",0));
     if(supporti[5]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[5],"sup5",0));
 
-    document.getElementById("contatori").innerText=
-      "Mazzo: "+mazzo.length+" | Mano: "+mano.length+" | Scarti: "+scarti.length;
+    document.getElementById("contatori").innerText =
+      "Mazzo: " + mazzo.length + " | Mano: " + mano.length + " | Scarti: " + scarti.length;
 
-    document.getElementById("selezioneInfo").innerText=
-      selezioni.length>0 ? ("Carte selezionate: "+selezioni.length) : "Nessuna carta selezionata";
+    document.getElementById("selezioneInfo").innerText =
+      selezioni.length>0 ? ("Carte selezionate: " + selezioni.length) : "Nessuna carta selezionata";
   }
 
   async function resetGioco(){
-    mazzo=creaMazzo();
+    mazzo = creaMazzo();
     shuffle(mazzo);
-    mano=[];
-    scarti=[];
-    primaria=null;
-    primariaCoperta=true;
-    supporti={2:null,3:null,4:null,5:null};
+    mano = [];
+    scarti = [];
+    primaria = null;
+    primariaCoperta = true;
+    supporti = {2:null,3:null,4:null,5:null};
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
@@ -655,7 +727,10 @@
 
   async function pesca(n){
     for(let i=0;i<n;i++){
-      if(mazzo.length===0){ alert("Mazzo vuoto!"); break; }
+      if(mazzo.length===0){
+        alert("Mazzo vuoto!");
+        break;
+      }
       mano.push(mazzo.shift());
     }
     clearSelezione();
@@ -664,14 +739,17 @@
   }
 
   function pescaN(){
-    const n=parseInt(document.getElementById("numPesca").value);
-    if(isNaN(n)||n<1) return;
+    const n = parseInt(document.getElementById("numPesca").value);
+    if(isNaN(n) || n<1) return;
     pesca(n);
   }
 
   async function scartaDalMazzo(n){
     for(let i=0;i<n;i++){
-      if(mazzo.length===0){ alert("Mazzo vuoto!"); break; }
+      if(mazzo.length===0){
+        alert("Mazzo vuoto!");
+        break;
+      }
       scarti.push(mazzo.shift());
     }
     clearSelezione();
@@ -680,8 +758,8 @@
   }
 
   function scartaDalMazzoN(){
-    const n=parseInt(document.getElementById("numScartaMazzo").value);
-    if(isNaN(n)||n<1) return;
+    const n = parseInt(document.getElementById("numScartaMazzo").value);
+    if(isNaN(n) || n<1) return;
     scartaDalMazzo(n);
   }
 
@@ -691,12 +769,12 @@
       return;
     }
 
-    const idx=selezioni[0].index;
+    const idx = selezioni[0].index;
 
     if(primaria) mano.push(primaria);
-    primaria=mano.splice(idx,1)[0];
+    primaria = mano.splice(idx,1)[0];
 
-    primariaCoperta=true; // SEMPRE COPERTA QUANDO LA METTI
+    primariaCoperta = true;
 
     clearSelezione();
     aggiornaUI();
@@ -709,10 +787,10 @@
       return;
     }
 
-    const idx=selezioni[0].index;
+    const idx = selezioni[0].index;
 
     if(supporti[n]) mano.push(supporti[n]);
-    supporti[n]=mano.splice(idx,1)[0];
+    supporti[n] = mano.splice(idx,1)[0];
 
     clearSelezione();
     aggiornaUI();
@@ -721,11 +799,12 @@
 
   async function azioneScarta(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
-      const c=getCartaDaZona(sel.zona,sel.index);
-      if(c) scarti.push(rimuoviCartaDaZona(sel.zona,sel.index));
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) scarti.push(rimuoviCartaDaZona(sel.zona, sel.index));
     }
 
     clearSelezione();
@@ -735,11 +814,12 @@
 
   async function azioneMano(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
-      const c=getCartaDaZona(sel.zona,sel.index);
-      if(c) mano.push(rimuoviCartaDaZona(sel.zona,sel.index));
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mano.push(rimuoviCartaDaZona(sel.zona, sel.index));
     }
 
     clearSelezione();
@@ -749,11 +829,12 @@
 
   async function azioneMazzoMescola(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
-      const c=getCartaDaZona(sel.zona,sel.index);
-      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona,sel.index));
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona, sel.index));
     }
 
     shuffle(mazzo);
@@ -765,11 +846,12 @@
 
   async function azioneCima(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
-      const c=getCartaDaZona(sel.zona,sel.index);
-      if(c) mazzo.unshift(rimuoviCartaDaZona(sel.zona,sel.index));
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.unshift(rimuoviCartaDaZona(sel.zona, sel.index));
     }
 
     clearSelezione();
@@ -779,11 +861,12 @@
 
   async function azioneFondo(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
-      const c=getCartaDaZona(sel.zona,sel.index);
-      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona,sel.index));
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona, sel.index));
     }
 
     clearSelezione();
@@ -792,10 +875,13 @@
   }
 
   async function rimettiCasualeManoNelMazzo(){
-    if(mano.length===0){ alert("Non hai carte in mano!"); return; }
+    if(mano.length===0){
+      alert("Non hai carte in mano!");
+      return;
+    }
 
-    const idx=Math.floor(Math.random()*mano.length);
-    const c=mano.splice(idx,1)[0];
+    const idx = Math.floor(Math.random()*mano.length);
+    const c = mano.splice(idx,1)[0];
 
     mazzo.push(c);
     shuffle(mazzo);
@@ -806,104 +892,123 @@
   }
 
   async function resetRoomForAll(){
-    if(!roomId||!uid){ alert("Non sei in una stanza!"); return; }
-    if(!isHost){ alert("Solo l'host può resettare la stanza!"); return; }
+    if(!roomId || !uid){
+      alert("Non sei in una stanza!");
+      return;
+    }
 
-    const pubSnap=await get(ref(db,`rooms/${roomId}/public`));
-    if(!pubSnap.exists()){ alert("Nessun giocatore!"); return; }
+    if(!isHost){
+      alert("Solo l'host può resettare la stanza!");
+      return;
+    }
 
-    const allPlayers=Object.keys(pubSnap.val());
+    const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
+    if(!pubSnap.exists()){
+      alert("Nessun giocatore!");
+      return;
+    }
+
+    const allPlayers = Object.keys(pubSnap.val());
 
     for(const playerUid of allPlayers){
-      const nuovoMazzo=creaMazzo();
+      const nuovoMazzo = creaMazzo();
       shuffle(nuovoMazzo);
 
-      await set(ref(db,`rooms/${roomId}/private/${playerUid}`),{
-        mazzo:nuovoMazzo,
-        mano:[],
-        scarti:[]
+      await set(ref(db, `rooms/${roomId}/private/${playerUid}`), {
+        mazzo: nuovoMazzo,
+        mano: [],
+        scarti: []
       });
 
-      await update(ref(db,`rooms/${roomId}/public/${playerUid}`),{
-        primaria:null,
-        primariaCoperta:true,
-        supporti:{2:null,3:null,4:null,5:null},
-        contatori:{mazzo:52,mano:0,scarti:0}
+      await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+        primaria: null,
+        primariaCoperta: true,
+        supporti: {2:null,3:null,4:null,5:null},
+        contatori: { mazzo: 52, mano: 0, scarti: 0 }
       });
     }
 
     alert("Stanza resettata per tutti!");
   }
 
-  // SOLO HOST può scoprire/coprirla
-  async function hostSetPrimariaCoperta(playerUid,val){
-    if(!isHost){
-      alert("Solo l'host può scoprirla!");
+  async function joinRoom(){
+    if(!uid){
+      alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
       return;
     }
-    await update(ref(db,`rooms/${roomId}/public/${playerUid}`),{
-      primariaCoperta: val
-    });
-  }
 
-  async function joinRoom(){
-    if(!uid){ alert("Non sei loggato ancora, aspetta 2 secondi e riprova."); return; }
-    if(alreadyJoined){ alert("Sei già dentro la stanza!"); return; }
-    if(!nickname){ alert("Prima imposta un nickname!"); return; }
-
-    const name=document.getElementById("roomName").value.trim();
-    if(!name){ alert("Inserisci nome stanza!"); return; }
-
-    alreadyJoined=true;
-    roomId=name.replace(/[^a-zA-Z0-9_-]/g,"_");
-
-    const roomMetaRef=ref(db,`rooms/${roomId}/meta`);
-    const roomMetaSnap=await get(roomMetaRef);
-
-    if(!roomMetaSnap.exists()){
-      await set(roomMetaRef,{createdAt:Date.now(),hostUid:uid});
+    if(alreadyJoined){
+      alert("Sei già dentro la stanza!");
+      return;
     }
 
-    const meta=(await get(roomMetaRef)).val();
-    isHost=(meta.hostUid===uid);
-    document.getElementById("hostInfo").innerText="Host: "+(isHost?"SI":"NO");
+    if(!nickname){
+      alert("Prima imposta un nickname!");
+      return;
+    }
 
-    const pubSnap=await get(ref(db,`rooms/${roomId}/public`));
-    const players=pubSnap.exists()?Object.keys(pubSnap.val()).length:0;
+    const name = document.getElementById("roomName").value.trim();
+    if(!name){
+      alert("Inserisci nome stanza!");
+      return;
+    }
 
-    if(players>=9 && (!pubSnap.exists() || !pubSnap.val()[uid])){
+    alreadyJoined = true;
+
+    roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
+    const roomMetaSnap = await get(roomMetaRef);
+
+    if(!roomMetaSnap.exists()){
+      await set(roomMetaRef, {
+        createdAt: Date.now(),
+        hostUid: uid
+      });
+    }
+
+    const meta = (await get(roomMetaRef)).val();
+    isHost = (meta.hostUid === uid);
+
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
+
+    const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
+    const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
+
+    if(players >= 9 && (!pubSnap.exists() || !pubSnap.val()[uid])){
       alert("Stanza piena (max 9 giocatori).");
       return;
     }
 
-    document.getElementById("roomInfo").innerHTML="Connesso alla stanza: <b>"+roomId+"</b>";
+    document.getElementById("roomInfo").innerHTML =
+      "Connesso alla stanza: <b>" + roomId + "</b>";
 
     salvaPresenza();
 
-    const myPrivRef=ref(db,`rooms/${roomId}/private/${uid}`);
-    const myPrivSnap=await get(myPrivRef);
+    const myPrivRef = ref(db, `rooms/${roomId}/private/${uid}`);
+    const myPrivSnap = await get(myPrivRef);
 
     if(!myPrivSnap.exists()){
       await resetGioco();
-    }else{
-      const data=myPrivSnap.val();
-      mazzo=data.mazzo||[];
-      mano=data.mano||[];
-      scarti=data.scarti||[];
+    } else {
+      const data = myPrivSnap.val();
+      mazzo = data.mazzo || [];
+      mano = data.mano || [];
+      scarti = data.scarti || [];
     }
 
-    const myPubRef=ref(db,`rooms/${roomId}/public/${uid}`);
-    const myPubSnap=await get(myPubRef);
+    const myPubRef = ref(db, `rooms/${roomId}/public/${uid}`);
+    const myPubSnap = await get(myPubRef);
 
     if(myPubSnap.exists()){
-      const pdata=myPubSnap.val();
-      primaria=pdata.primaria||null;
-      primariaCoperta = (pdata.primariaCoperta ?? true);
-      supporti=pdata.supporti||{2:null,3:null,4:null,5:null};
-    }else{
-      primaria=null;
-      primariaCoperta=true;
-      supporti={2:null,3:null,4:null,5:null};
+      const pdata = myPubSnap.val();
+      primaria = pdata.primaria || null;
+      primariaCoperta = (pdata.primariaCoperta !== undefined) ? pdata.primariaCoperta : true;
+      supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
+    } else {
+      primaria = null;
+      primariaCoperta = true;
+      supporti = {2:null,3:null,4:null,5:null};
     }
 
     await salvaPubblico();
@@ -911,106 +1016,117 @@
     clearSelezione();
     aggiornaUI();
 
-    // PRESENZA ONLINE
-    onValue(ref(db,`rooms/${roomId}/presence`),(snap)=>{
-      const list=document.getElementById("playersList");
-      list.innerHTML="";
+    onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
+      const list = document.getElementById("playersList");
+      list.innerHTML = "";
 
       if(!snap.exists()){
-        document.getElementById("playerCountInfo").innerText="Giocatori online: 0 / 9";
+        document.getElementById("playerCountInfo").innerText = "Giocatori online: 0 / 9";
         return;
       }
 
-      const all=snap.val();
-      let onlineCount=0;
+      const all = snap.val();
+      let onlineCount = 0;
 
       for(const pUid in all){
-        const p=all[pUid];
+        const p = all[pUid];
+
         if(p.online) onlineCount++;
 
-        const div=document.createElement("div");
-        div.className="info";
-        div.innerHTML="<b>"+p.nickname+"</b> ("+pUid.substring(0,6)+") - "+
+        const div = document.createElement("div");
+        div.className = "info";
+
+        div.innerHTML =
+          "<b>" + p.nickname + "</b> (" + pUid.substring(0,6) + ") - " +
           (p.online ? "<span class='online'>ONLINE</span>" : "<span class='offline'>OFFLINE</span>");
 
         list.appendChild(div);
       }
 
-      document.getElementById("playerCountInfo").innerText=
-        "Giocatori online: "+onlineCount+" / 9";
+      document.getElementById("playerCountInfo").innerText =
+        "Giocatori online: " + onlineCount + " / 9";
     });
 
-    // PUBBLICO ALTRI
-    onValue(ref(db,`rooms/${roomId}/public`),(snap)=>{
-      const playersArea=document.getElementById("playersArea");
-      playersArea.innerHTML="";
+    onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
+      const playersArea = document.getElementById("playersArea");
+      playersArea.innerHTML = "";
 
       if(!snap.exists()) return;
 
-      const all=snap.val();
+      const all = snap.val();
 
       for(const playerUid in all){
-        if(playerUid===uid) continue;
+        if(playerUid === uid) continue;
 
-        const pdata=all[playerUid];
+        const pdata = all[playerUid];
 
-        const box=document.createElement("div");
-        box.className="playerPublic";
+        const box = document.createElement("div");
+        box.className = "playerPublic";
 
-        const nm=document.createElement("div");
-        nm.className="playerName";
+        const nm = document.createElement("div");
+        nm.className = "playerName";
 
-        const nome=pdata.nickname ? pdata.nickname : ("Giocatore "+playerUid.substring(0,6));
+        const nome = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
 
-        let cMazzo=0, cMano=0, cScarti=0;
+        let cMazzo = 0;
+        let cMano = 0;
+        let cScarti = 0;
+
         if(pdata.contatori){
-          cMazzo=pdata.contatori.mazzo ?? 0;
-          cMano=pdata.contatori.mano ?? 0;
-          cScarti=pdata.contatori.scarti ?? 0;
+          cMazzo = pdata.contatori.mazzo ?? 0;
+          cMano = pdata.contatori.mano ?? 0;
+          cScarti = pdata.contatori.scarti ?? 0;
         }
 
-        nm.innerHTML=`
+        nm.innerHTML = `
           ${nome}
           <div class="playerCounters">
             Mazzo: <b>${cMazzo}</b> | Mano: <b>${cMano}</b> | Scarti: <b>${cScarti}</b>
           </div>
         `;
+
         box.appendChild(nm);
 
-        const cArea=document.createElement("div");
-        cArea.className="smallCards";
+        const cArea = document.createElement("div");
+        cArea.className = "smallCards";
 
-        // PRIMARIA (COPERTA SE primariaCoperta = true)
         if(pdata.primaria){
           if(pdata.primariaCoperta){
-            cArea.appendChild(creaCoperta(true));
-          }else{
-            cArea.appendChild(creaCartaDiv(pdata.primaria,"x",0,true));
-          }
-
-          // SOLO HOST: pulsanti per scoprirla/coprirla
-          if(isHost){
-            const btnShow=document.createElement("button");
-            btnShow.textContent="Scopri";
-            btnShow.className="greenBtn";
-            btnShow.onclick=()=>hostSetPrimariaCoperta(playerUid,false);
-
-            const btnHide=document.createElement("button");
-            btnHide.textContent="Copri";
-            btnHide.className="redBtn";
-            btnHide.onclick=()=>hostSetPrimariaCoperta(playerUid,true);
-
-            cArea.appendChild(btnShow);
-            cArea.appendChild(btnHide);
+            cArea.appendChild(creaCoperta());
+          } else {
+            cArea.appendChild(creaCartaDiv(pdata.primaria, "x", 0, true));
           }
         }
 
-        // SUPPORTI sempre visibili
         if(pdata.supporti){
-          if(pdata.supporti["2"]) cArea.appendChild(creaCartaDiv(pdata.supporti["2"],"x",0,true));
-          if(pdata.supporti["3"]) cArea.appendChild(creaCartaDiv(pdata.supporti["3"],"x",0,true));
-          if(pdata.supporti["4"]) cArea.appendChild(creaCartaDiv(pdata.supporti["4"],"x",0,true));
-          if(pdata.supporti["5"]) cArea.appendChild(creaCartaDiv(pdata.supporti["5"],"x",0,true));
+          if(pdata.supporti["2"]) cArea.appendChild(creaCartaDiv(pdata.supporti["2"], "x", 0, true));
+          if(pdata.supporti["3"]) cArea.appendChild(creaCartaDiv(pdata.supporti["3"], "x", 0, true));
+          if(pdata.supporti["4"]) cArea.appendChild(creaCartaDiv(pdata.supporti["4"], "x", 0, true));
+          if(pdata.supporti["5"]) cArea.appendChild(creaCartaDiv(pdata.supporti["5"], "x", 0, true));
+        }
+
+        // HOST può scoprire/coprirla di qualsiasi giocatore
+        if(isHost && pdata.primaria){
+          const btnReveal = document.createElement("button");
+          btnReveal.textContent = "Scopri";
+          btnReveal.className = "greenBtn";
+          btnReveal.onclick = async ()=>{
+            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+              primariaCoperta: false
+            });
+          };
+
+          const btnHide = document.createElement("button");
+          btnHide.textContent = "Copri";
+          btnHide.className = "redBtn";
+          btnHide.onclick = async ()=>{
+            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+              primariaCoperta: true
+            });
+          };
+
+          box.appendChild(btnReveal);
+          box.appendChild(btnHide);
         }
 
         box.appendChild(cArea);
@@ -1021,30 +1137,30 @@
 
   signInAnonymously(auth);
 
-  onAuthStateChanged(auth,(user)=>{
+  onAuthStateChanged(auth, (user)=>{
     if(user){
-      uid=user.uid;
-      document.getElementById("roomInfo").innerText=
-        "Loggato: "+uid.substring(0,8)+"... (inserisci nome stanza)";
+      uid = user.uid;
+      document.getElementById("roomInfo").innerText =
+        "Loggato: " + uid.substring(0,8) + "... (inserisci nome stanza)";
     }
   });
 
-  window.joinRoom=joinRoom;
-  window.resetGioco=resetGioco;
-  window.mescolaMazzo=mescolaMazzo;
-  window.pesca=pesca;
-  window.pescaN=pescaN;
-  window.mettiPrimaria=mettiPrimaria;
-  window.mettiSupporto=mettiSupporto;
-  window.azioneScarta=azioneScarta;
-  window.azioneMano=azioneMano;
-  window.azioneMazzoMescola=azioneMazzoMescola;
-  window.azioneCima=azioneCima;
-  window.azioneFondo=azioneFondo;
-  window.scartaDalMazzo=scartaDalMazzo;
-  window.scartaDalMazzoN=scartaDalMazzoN;
-  window.rimettiCasualeManoNelMazzo=rimettiCasualeManoNelMazzo;
-  window.resetRoomForAll=resetRoomForAll;
+  window.joinRoom = joinRoom;
+  window.resetGioco = resetGioco;
+  window.mescolaMazzo = mescolaMazzo;
+  window.pesca = pesca;
+  window.pescaN = pescaN;
+  window.mettiPrimaria = mettiPrimaria;
+  window.mettiSupporto = mettiSupporto;
+  window.azioneScarta = azioneScarta;
+  window.azioneMano = azioneMano;
+  window.azioneMazzoMescola = azioneMazzoMescola;
+  window.azioneCima = azioneCima;
+  window.azioneFondo = azioneFondo;
+  window.scartaDalMazzo = scartaDalMazzo;
+  window.scartaDalMazzoN = scartaDalMazzoN;
+  window.rimettiCasualeManoNelMazzo = rimettiCasualeManoNelMazzo;
+  window.resetRoomForAll = resetRoomForAll;
 </script>
 
 </body>
