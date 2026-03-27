@@ -285,7 +285,7 @@
 
   var scartiVisibili = false;
 
-  // SELEZIONE MULTIPLA: lista di oggetti {zona:"mano", index:0}
+  // SELEZIONE MULTIPLA
   var selectedList = [];
 
   function creaMazzo(){
@@ -321,6 +321,25 @@
   function coloreClasse(seme){
     if(seme==="H" || seme==="D") return "red";
     return "black";
+  }
+
+  function pulisciSelezioneDuplicata(){
+    var unique = [];
+    for(var i=0;i<selectedList.length;i++){
+      var ref = selectedList[i];
+      var found = false;
+
+      for(var j=0;j<unique.length;j++){
+        if(unique[j].zona === ref.zona && unique[j].index === ref.index){
+          found = true;
+          break;
+        }
+      }
+
+      if(!found) unique.push(ref);
+    }
+
+    selectedList = unique;
   }
 
   function deselezionaTutto(){
@@ -374,21 +393,6 @@
     if(ref.zona==="sup5"){ var c5=supporti[5]; supporti[5]=null; return c5; }
 
     return null;
-  }
-
-  function fixIndexesAfterRemove(){
-    // dopo una rimozione gli indici cambiano, quindi ricostruiamo la selezione
-    var newList = [];
-
-    for(var i=0;i<selectedList.length;i++){
-      var ref = selectedList[i];
-      var card = getCardByRef(ref);
-      if(card){
-        newList.push(ref);
-      }
-    }
-
-    selectedList = newList;
   }
 
   function creaCorner(v, sym, className){
@@ -531,15 +535,15 @@
   }
 
   function azioneScarta(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
     }
 
-    // rimuove in ordine inverso per non rompere gli indici
     for(var i=selectedList.length-1;i>=0;i--){
-      var ref = selectedList[i];
-      var carta = removeCardByRef(ref);
+      var carta = removeCardByRef(selectedList[i]);
       if(carta) scarti.push(carta);
     }
 
@@ -548,14 +552,15 @@
   }
 
   function azioneMano(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
     }
 
     for(var i=selectedList.length-1;i>=0;i--){
-      var ref = selectedList[i];
-      var carta = removeCardByRef(ref);
+      var carta = removeCardByRef(selectedList[i]);
       if(carta) mano.push(carta);
     }
 
@@ -564,14 +569,15 @@
   }
 
   function azioneMazzoMescola(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
     }
 
     for(var i=selectedList.length-1;i>=0;i--){
-      var ref = selectedList[i];
-      var carta = removeCardByRef(ref);
+      var carta = removeCardByRef(selectedList[i]);
       if(carta) mazzo.push(carta);
     }
 
@@ -581,24 +587,23 @@
   }
 
   function azioneCima(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
     }
 
-    // ordine A: rispetta ordine selezione
     var toMove = [];
     for(var i=0;i<selectedList.length;i++){
       var carta = getCardByRef(selectedList[i]);
       if(carta) toMove.push(carta);
     }
 
-    // rimuovo effettivamente (indietro per sicurezza)
     for(var j=selectedList.length-1;j>=0;j--){
       removeCardByRef(selectedList[j]);
     }
 
-    // in cima: unshift al contrario per mantenere ordine selezione
     for(var k=toMove.length-1;k>=0;k--){
       mazzo.unshift(toMove[k]);
     }
@@ -608,6 +613,8 @@
   }
 
   function azioneFondo(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
@@ -632,6 +639,8 @@
   }
 
   function prendiDaScarti(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona almeno una carta!");
       return;
@@ -649,7 +658,6 @@
       return;
     }
 
-    // rimuove in ordine inverso
     for(var j=soloScarti.length-1;j>=0;j--){
       mano.push(removeCardByRef(soloScarti[j]));
     }
@@ -675,6 +683,8 @@
   }
 
   function mettiPrimaria(){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona una carta dalla mano!");
       return;
@@ -701,6 +711,8 @@
   }
 
   function mettiSupporto(n){
+    pulisciSelezioneDuplicata();
+
     if(selectedList.length===0){
       alert("Seleziona una carta dalla mano!");
       return;
@@ -804,7 +816,12 @@
     if(supporti[5]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[5],"sup5",0));
 
     document.getElementById("contatori").innerText =
-      "Mazzo: " + mazzo.length + " | Mano: " + mano.length + " | Scarti: " + scarti.length;
+      "Mazzo: " + mazzo.length +
+      " | Mano: " + mano.length +
+      " | Scarti: " + scarti.length +
+      " | Primaria: " + (primaria ? 1 : 0) +
+      " | Supporti: " +
+      ((supporti[2]?1:0)+(supporti[3]?1:0)+(supporti[4]?1:0)+(supporti[5]?1:0));
 
     document.getElementById("selezioneInfo").innerText =
       "Carte selezionate: " + selectedList.length;
