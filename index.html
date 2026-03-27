@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Mazzo Carte</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Carte Multiplayer</title>
 
   <style>
     body{
@@ -34,11 +34,19 @@
       font-weight:bold;
     }
 
+    button.redBtn{
+      background:#ff3333;
+    }
+
+    button.greenBtn{
+      background:#00aa66;
+    }
+
     input{
       padding:8px;
       border-radius:10px;
       border:none;
-      width:70px;
+      width:160px;
       text-align:center;
       margin:5px;
       font-weight:bold;
@@ -62,6 +70,7 @@
       font-size:14px;
       color:#ccc;
       margin:5px;
+      word-break:break-word;
     }
 
     .card{
@@ -86,14 +95,8 @@
       font-size:14px;
       font-weight:bold;
       text-align:center;
-      width:28px;
+      width:26px;
       line-height:14px;
-    }
-
-    .corner .suit{
-      display:block;
-      font-size:18px;
-      margin-top:2px;
     }
 
     .top-left{
@@ -107,66 +110,15 @@
       transform:rotate(180deg);
     }
 
-    .cornerNum{
-      position:absolute;
-      font-size:16px;
-      font-weight:bold;
-      width:22px;
-      text-align:center;
-    }
-
-    .cornerNum.top-left{
-      top:6px;
-      left:6px;
-    }
-
-    .cornerNum.bottom-right{
-      bottom:6px;
-      right:6px;
-      transform:rotate(180deg);
-    }
-
     .pip{
       position:absolute;
-      font-size:18px;
+      font-size:20px;
       opacity:0.95;
       transform:translate(-50%,-50%);
     }
 
     .red{ color:#d00000; }
     .black{ color:#000; }
-
-    .cardBack{
-      width:85px;
-      height:125px;
-      border-radius:14px;
-      background:repeating-linear-gradient(
-        45deg,
-        #002a66,
-        #002a66 10px,
-        #0047ab 10px,
-        #0047ab 20px
-      );
-      border:2px solid #ddd;
-      cursor:pointer;
-      position:relative;
-      box-shadow:0 4px 10px rgba(0,0,0,0.7);
-      overflow:hidden;
-    }
-
-    .cardBack::after{
-      content:"★";
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      font-size:55px;
-      color:rgba(255,255,255,0.6);
-    }
-
-    .cardBack.selected{
-      border:3px solid gold;
-    }
 
     .faceBox{
       position:absolute;
@@ -208,56 +160,114 @@
       font-size:70px;
       opacity:0.95;
     }
+
+    .playersBox{
+      background:#111;
+      margin:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.15);
+    }
+
+    .playerPublic{
+      background:#1c1c1c;
+      border-radius:14px;
+      padding:10px;
+      margin:10px 0;
+    }
+
+    .playerName{
+      font-weight:bold;
+      color:#00ffcc;
+      margin-bottom:6px;
+    }
+
+    .smallCards{
+      display:flex;
+      gap:8px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .smallCard{
+      transform:scale(0.85);
+      transform-origin:center;
+    }
+
+    .online{
+      color:#00ff66;
+      font-weight:bold;
+    }
+
+    .offline{
+      color:#ff5555;
+      font-weight:bold;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>🃏 Mazzo Carte Francesi</h2>
+<h2>🃏 Carte Multiplayer (Firebase)</h2>
 
 <div class="zone">
-  <button onclick="resetGioco()">Reset</button>
-  <button onclick="mescolaMazzo()">Mescola</button>
-  <button onclick="pesca(1)">Pesca 1</button>
-  <button onclick="pesca(5)">Pesca 5</button>
-
-  <input type="number" id="numPesca" min="1" value="2">
-  <button onclick="pescaN()">Pesca N</button>
-
-  <hr style="margin:12px;border:1px solid #333;">
-
-  <button onclick="scartaDalMazzo(1)">Scarta 1 (coperto)</button>
-  <input type="number" id="numScarta" min="1" value="3">
-  <button onclick="scartaN()">Scarta N (coperto)</button>
-
-  <hr style="margin:12px;border:1px solid #333;">
-
-  <button onclick="toggleScarti()">Mostra/Nascondi Scarti</button>
+  <div class="title">PROFILO</div>
+  <input id="nickname" placeholder="Nickname">
+  <button onclick="salvaNickname()" class="greenBtn">Salva Nickname</button>
+  <div class="info" id="nickInfo">Nickname non impostato</div>
 </div>
 
 <div class="zone">
-  <div class="title">AZIONI SELEZIONE</div>
-  <button onclick="azioneScarta()">Scarta (selezione)</button>
+  <div class="title">STANZA</div>
+  <input id="roomName" placeholder="Nome stanza">
+  <button onclick="joinRoom()">Entra / Crea stanza</button>
+  <div class="info" id="roomInfo">Non connesso</div>
+</div>
+
+<div class="zone">
+  <div class="title">AZIONI HOST</div>
+  <button onclick="resetRoomForAll()" class="redBtn">RESET STANZA PER TUTTI</button>
+  <div class="info" id="hostInfo">Host: No</div>
+</div>
+
+<div class="zone">
+  <div class="title">AZIONI MAZZO</div>
+  <button onclick="resetGioco()">Reset Mazzo (solo tuo)</button>
+  <button onclick="mescolaMazzo()">Mescola</button>
+  <button onclick="pesca(1)">Pesca 1</button>
+  <button onclick="pesca(5)">Pesca 5</button>
+  <input type="number" id="numPesca" min="1" value="2">
+  <button onclick="pescaN()">Pesca N</button>
+</div>
+
+<div class="zone">
+  <div class="title">SCARTA DAL MAZZO (SENZA VEDERE)</div>
+  <button onclick="scartaDalMazzo(1)">Scarta 1</button>
+  <input type="number" id="numScartaMazzo" min="1" value="2">
+  <button onclick="scartaDalMazzoN()">Scarta N</button>
+</div>
+
+<div class="zone">
+  <div class="title">AZIONI SELEZIONE (MULTI)</div>
+  <button onclick="azioneScarta()">Scarta</button>
   <button onclick="azioneMano()">Rimetti in Mano</button>
   <button onclick="azioneMazzoMescola()">Rimetti nel Mazzo (mescola)</button>
   <button onclick="azioneCima()">Rimetti in Cima</button>
   <button onclick="azioneFondo()">Rimetti in Fondo</button>
-  <button onclick="prendiDaScarti()">Prendi dagli Scarti → Mano</button>
-  <button onclick="rimettiCasualeManoNelMazzo()">Casuale Mano → Mazzo + Mescola</button>
-  <button onclick="deselezionaTutto()">Deseleziona tutto</button>
+  <button onclick="rimettiCasualeManoNelMazzo()">Rimetti casuale dalla mano + mescola</button>
 </div>
 
 <div class="info" id="contatori"></div>
 <div class="info" id="selezioneInfo"></div>
 
 <div class="zone">
-  <div class="title">PRIMARIA</div>
+  <div class="title">PRIMARIA (PUBBLICA)</div>
   <div class="cards" id="primaria"></div>
   <button onclick="mettiPrimaria()">Metti Primaria (da mano)</button>
 </div>
 
 <div class="zone">
-  <div class="title">SUPPORTI</div>
+  <div class="title">SUPPORTI (PUBBLICI)</div>
   <div class="cards" id="supporti"></div>
   <button onclick="mettiSupporto(2)">Supporto 2</button>
   <button onclick="mettiSupporto(3)">Supporto 3</button>
@@ -266,44 +276,97 @@
 </div>
 
 <div class="zone">
-  <div class="title">MANO</div>
+  <div class="title">MANO (PRIVATA)</div>
   <div class="cards" id="mano"></div>
 </div>
 
 <div class="zone">
-  <div class="title">SCARTI</div>
+  <div class="title">SCARTI (PRIVATI MA VISIBILI)</div>
   <div class="cards" id="scarti"></div>
 </div>
 
-<script>
-  var mazzo = [];
-  var mano = [];
-  var scarti = [];
+<div class="playersBox">
+  <div class="title">GIOCATORI ONLINE</div>
+  <div id="playersList"></div>
+</div>
 
-  var primaria = null;
-  var supporti = {2:null,3:null,4:null,5:null};
+<div class="playersBox">
+  <div class="title">ALTRI GIOCATORI (VEDI SOLO PUBBLICO)</div>
+  <div id="playersArea"></div>
+</div>
 
-  var scartiVisibili = false;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getDatabase, ref, set, get, update, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  var selectedList = [];
+  // 🔥 FIREBASE CONFIG
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0REuxzEW1j9jFBJTiTaT1g7ftAHkZmhg",
+    authDomain: "carteweb-80275.firebaseapp.com",
+    databaseURL: "https://carteweb-80275-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "carteweb-80275",
+    storageBucket: "carteweb-80275.firebasestorage.app",
+    messagingSenderId: "551833622438",
+    appId: "1:551833622438:web:a9f2697db6862560576167",
+    measurementId: "G-X3ZSV25SSE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  let uid = null;
+  let roomId = null;
+  let nickname = localStorage.getItem("nickname") || "";
+
+  // HOST
+  let isHost = false;
+
+  // DATI LOCALI
+  let mazzo = [];
+  let mano = [];
+  let scarti = [];
+  let primaria = null;
+  let supporti = {2:null,3:null,4:null,5:null};
+
+  // MULTI SELEZIONE
+  let selezioni = [];
+
+  // MOSTRA NICK
+  document.getElementById("nickname").value = nickname;
+  document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
+
+  function salvaNickname(){
+    const n = document.getElementById("nickname").value.trim();
+    if(!n){
+      alert("Inserisci un nickname!");
+      return;
+    }
+    nickname = n;
+    localStorage.setItem("nickname", nickname);
+    document.getElementById("nickInfo").innerText = "Nickname: " + nickname;
+    if(roomId && uid) salvaPresenza();
+  }
+
+  window.salvaNickname = salvaNickname;
 
   function creaMazzo(){
-    var suits = ["H","D","C","S"];
-    var values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-    var m = [];
-
-    for(var i=0;i<suits.length;i++){
-      for(var j=0;j<values.length;j++){
-        m.push({ valore: values[j], seme: suits[i] });
+    const suits = ["H","D","C","S"];
+    const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+    const m = [];
+    for(let s of suits){
+      for(let v of values){
+        m.push({ valore: v, seme: s });
       }
     }
     return m;
   }
 
   function shuffle(a){
-    for(var i=a.length-1;i>0;i--){
-      var j = Math.floor(Math.random()*(i+1));
-      var tmp = a[i];
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      const tmp = a[i];
       a[i] = a[j];
       a[j] = tmp;
     }
@@ -322,164 +385,104 @@
     return "black";
   }
 
-  function deselezionaTutto(){
-    selectedList = [];
-    aggiornaUI();
+  function stessaSelezione(zona,index){
+    return selezioni.some(s => s.zona===zona && s.index===index);
   }
 
-  function isSelected(zona, index){
-    for(var i=0;i<selectedList.length;i++){
-      if(selectedList[i].zona === zona && selectedList[i].index === index){
-        return true;
-      }
-    }
-    return false;
+  function toggleSelezione(zona,index){
+    const pos = selezioni.findIndex(s => s.zona===zona && s.index===index);
+    if(pos>=0) selezioni.splice(pos,1);
+    else selezioni.push({zona,index});
   }
 
-  function toggleSelect(zona, index){
-    for(var i=0;i<selectedList.length;i++){
-      if(selectedList[i].zona === zona && selectedList[i].index === index){
-        selectedList.splice(i,1);
-        return;
-      }
-    }
-    selectedList.push({zona: zona, index: index});
+  function clearSelezione(){
+    selezioni = [];
   }
 
-  function pulisciSelezioneDuplicata(){
-    var unique = [];
-    for(var i=0;i<selectedList.length;i++){
-      var ref = selectedList[i];
-      var found = false;
-
-      for(var j=0;j<unique.length;j++){
-        if(unique[j].zona === ref.zona && unique[j].index === ref.index){
-          found = true;
-          break;
-        }
-      }
-
-      if(!found) unique.push(ref);
-    }
-
-    selectedList = unique;
-  }
-
-  function getCardByRef(ref){
-    if(ref.zona==="mano") return mano[ref.index];
-    if(ref.zona==="scarti") return scarti[ref.index];
-    if(ref.zona==="primaria") return primaria;
-    if(ref.zona==="sup2") return supporti[2];
-    if(ref.zona==="sup3") return supporti[3];
-    if(ref.zona==="sup4") return supporti[4];
-    if(ref.zona==="sup5") return supporti[5];
+  function getCartaDaZona(zona,index){
+    if(zona==="mano") return mano[index];
+    if(zona==="scarti") return scarti[index];
+    if(zona==="primaria") return primaria;
+    if(zona==="sup2") return supporti[2];
+    if(zona==="sup3") return supporti[3];
+    if(zona==="sup4") return supporti[4];
+    if(zona==="sup5") return supporti[5];
     return null;
   }
 
-  function removeCardByRef(ref){
-    if(ref.zona==="mano") return mano.splice(ref.index,1)[0];
-    if(ref.zona==="scarti") return scarti.splice(ref.index,1)[0];
+  function rimuoviCartaDaZona(zona,index){
+    if(zona==="mano") return mano.splice(index,1)[0];
+    if(zona==="scarti") return scarti.splice(index,1)[0];
 
-    if(ref.zona==="primaria"){
-      var c = primaria;
+    if(zona==="primaria"){
+      const c = primaria;
       primaria = null;
       return c;
     }
 
-    if(ref.zona==="sup2"){ var c2=supporti[2]; supporti[2]=null; return c2; }
-    if(ref.zona==="sup3"){ var c3=supporti[3]; supporti[3]=null; return c3; }
-    if(ref.zona==="sup4"){ var c4=supporti[4]; supporti[4]=null; return c4; }
-    if(ref.zona==="sup5"){ var c5=supporti[5]; supporti[5]=null; return c5; }
+    if(zona==="sup2"){ const c=supporti[2]; supporti[2]=null; return c; }
+    if(zona==="sup3"){ const c=supporti[3]; supporti[3]=null; return c; }
+    if(zona==="sup4"){ const c=supporti[4]; supporti[4]=null; return c; }
+    if(zona==="sup5"){ const c=supporti[5]; supporti[5]=null; return c; }
 
     return null;
   }
 
-  // 🔥 rimozione sicura ordinata
-  function rimuoviSelezionateSicuro(){
-    pulisciSelezioneDuplicata();
-
-    // copia refs
-    var refs = selectedList.slice();
-
-    // ordina per zona e index decrescente
-    refs.sort(function(a,b){
-      if(a.zona < b.zona) return -1;
-      if(a.zona > b.zona) return 1;
-      return b.index - a.index;
-    });
-
-    var removedCards = [];
-
-    for(var i=0;i<refs.length;i++){
-      var c = removeCardByRef(refs[i]);
-      if(c) removedCards.push(c);
-    }
-
-    selectedList = [];
-    return removedCards;
-  }
-
-  function creaCorner(v, sym, className){
-    var corner = document.createElement("div");
+  function creaCorner(v, className){
+    const corner = document.createElement("div");
     corner.className = "corner " + className;
-    corner.innerHTML = v + "<span class='suit'>" + sym + "</span>";
+    corner.innerHTML = v;
     return corner;
   }
 
-  function creaCornerSoloNumero(v, className){
-    var corner = document.createElement("div");
-    corner.className = "cornerNum " + className;
-    corner.textContent = v;
-    return corner;
-  }
-
-  function creaPip(sym, x, y){
-    var pip = document.createElement("div");
+  function creaPip(sym, x, y, rot){
+    const pip = document.createElement("div");
     pip.className = "pip";
     pip.textContent = sym;
     pip.style.left = x + "%";
     pip.style.top = y + "%";
+    pip.style.transform = "translate(-50%,-50%) rotate(" + rot + "deg)";
     return pip;
   }
 
   function aggiungiPips(div, valore, sym){
-    var layouts = {
-      2: [[50,25],[50,85]],
-      3: [[50,25],[50,55],[50,85]],
-      4: [[30,28],[70,28],[30,82],[70,82]],
-      5: [[30,28],[70,28],[50,55],[30,82],[70,82]],
-      6: [[30,25],[70,25],[30,55],[70,55],[30,85],[70,85]],
-      7: [[30,25],[70,25],[30,55],[70,55],[30,85],[70,85],[50,40]],
-      8: [[30,25],[70,25],[30,55],[70,55],[30,85],[70,85],[50,40],[50,70]],
-      9: [[30,23],[70,23],[30,45],[70,45],[30,67],[70,67],[30,89],[70,89],[50,56]],
-      10:[[30,22],[70,22],[30,40],[70,40],[30,58],[70,58],[30,76],[70,76],[50,31],[50,85]]
+    const layouts = {
+      2: [[50,30,0],[50,78,180]],
+      3: [[50,28,0],[50,54,0],[50,80,180]],
+      4: [[30,28,0],[70,28,0],[30,80,180],[70,80,180]],
+      5: [[30,28,0],[70,28,0],[50,54,0],[30,80,180],[70,80,180]],
+      6: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180]],
+      7: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0]],
+      8: [[30,28,0],[70,28,0],[30,54,0],[70,54,0],[30,80,180],[70,80,180],[50,40,0],[50,68,180]],
+      9: [[30,26,0],[70,26,0],[30,48,0],[70,48,0],[30,70,180],[70,70,180],[50,37,0],[50,60,180],[50,54,0]],
+      10:[[30,24,0],[70,24,0],[30,42,0],[70,42,0],[30,60,180],[70,60,180],[30,78,180],[70,78,180],[50,33,0],[50,69,180]]
     };
 
-    var pts = layouts[valore];
+    const pts = layouts[valore];
     if(!pts) return;
 
-    for(var i=0;i<pts.length;i++){
-      div.appendChild(creaPip(sym, pts[i][0], pts[i][1]));
+    for(let i=0;i<pts.length;i++){
+      div.appendChild(creaPip(sym, pts[i][0], pts[i][1], pts[i][2]));
     }
   }
 
   function creaFace(v, sym, col){
-    var box = document.createElement("div");
+    const box = document.createElement("div");
     box.className = "faceBox";
     box.style.color = (col==="red") ? "#d00000" : "#000";
 
-    var icon = document.createElement("div");
+    const icon = document.createElement("div");
     icon.className = "icon";
 
     if(v==="J") icon.textContent = "⚔";
     if(v==="Q") icon.textContent = "♛";
     if(v==="K") icon.textContent = "♚";
 
-    var letter = document.createElement("div");
+    const letter = document.createElement("div");
     letter.className = "letter";
     letter.textContent = v;
 
-    var suit = document.createElement("div");
+    const suit = document.createElement("div");
     suit.className = "suit";
     suit.textContent = sym;
 
@@ -490,309 +493,100 @@
     return box;
   }
 
-  function creaCartaDiv(carta,zona,index){
-    var v = carta.valore;
-    var s = carta.seme;
-    var sym = simbolo(s);
-    var col = coloreClasse(s);
+  function creaCartaDiv(carta,zona,index,small=false){
+    const v = carta.valore;
+    const s = carta.seme;
+    const sym = simbolo(s);
+    const col = coloreClasse(s);
 
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "card " + col;
 
-    if(isSelected(zona,index)){
-      div.classList.add("selected");
+    if(small) div.classList.add("smallCard");
+
+    if(zona!=="x"){
+      if(stessaSelezione(zona,index)){
+        div.classList.add("selected");
+      }
+
+      div.onclick = function(){
+        toggleSelezione(zona,index);
+        aggiornaUI();
+      };
     }
 
-    div.onclick = function(){
-      toggleSelect(zona,index);
-      aggiornaUI();
-    };
+    if(v!=="A" && v!=="J" && v!=="Q" && v!=="K"){
+      div.appendChild(creaCorner(v, "top-left"));
+      div.appendChild(creaCorner(v, "bottom-right"));
+    } else {
+      const tl = document.createElement("div");
+      tl.className="corner top-left";
+      tl.innerHTML = v + "<br>" + sym;
+
+      const br = document.createElement("div");
+      br.className="corner bottom-right";
+      br.innerHTML = v + "<br>" + sym;
+
+      div.appendChild(tl);
+      div.appendChild(br);
+    }
 
     if(v==="J" || v==="Q" || v==="K"){
-      div.appendChild(creaCorner(v, sym, "top-left"));
-      div.appendChild(creaCorner(v, sym, "bottom-right"));
       div.appendChild(creaFace(v, sym, col));
       return div;
     }
 
     if(v==="A"){
-      div.appendChild(creaCorner(v, sym, "top-left"));
-      div.appendChild(creaCorner(v, sym, "bottom-right"));
-
-      var big = document.createElement("div");
+      const big = document.createElement("div");
       big.className = "aceBig";
       big.textContent = sym;
       div.appendChild(big);
 
-      div.appendChild(creaPip(sym, 50, 32));
-      div.appendChild(creaPip(sym, 50, 78));
+      div.appendChild(creaPip(sym, 50, 32, 0));
+      div.appendChild(creaPip(sym, 50, 78, 180));
       return div;
     }
 
-    div.appendChild(creaCornerSoloNumero(v, "top-left"));
-    div.appendChild(creaCornerSoloNumero(v, "bottom-right"));
-
-    var num = parseInt(v);
+    const num = parseInt(v);
     aggiungiPips(div, num, sym);
-    return div;
-  }
-
-  function creaCoperta(zona,index){
-    var div = document.createElement("div");
-    div.className = "cardBack";
-
-    if(isSelected(zona,index)){
-      div.classList.add("selected");
-    }
-
-    div.onclick = function(){
-      toggleSelect(zona,index);
-      aggiornaUI();
-    };
 
     return div;
   }
 
-  function toggleScarti(){
-    scartiVisibili = !scartiVisibili;
-    aggiornaUI();
+  async function salvaPrivato(){
+    if(!roomId || !uid) return;
+    await set(ref(db, `rooms/${roomId}/private/${uid}`), {
+      mazzo, mano, scarti
+    });
   }
 
-  function azioneScarta(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
-
-    var cards = rimuoviSelezionateSicuro();
-    for(var i=0;i<cards.length;i++){
-      scarti.push(cards[i]);
-    }
-
-    aggiornaUI();
+  async function salvaPubblico(){
+    if(!roomId || !uid) return;
+    await set(ref(db, `rooms/${roomId}/public/${uid}`), {
+      primaria, supporti, nickname
+    });
   }
 
-  function azioneMano(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
-
-    var cards = rimuoviSelezionateSicuro();
-    for(var i=0;i<cards.length;i++){
-      mano.push(cards[i]);
-    }
-
-    aggiornaUI();
+  async function salvaTutto(){
+    await salvaPrivato();
+    await salvaPubblico();
   }
 
-  function azioneMazzoMescola(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
+  async function salvaPresenza(){
+    if(!roomId || !uid) return;
 
-    var cards = rimuoviSelezionateSicuro();
-    for(var i=0;i<cards.length;i++){
-      mazzo.push(cards[i]);
-    }
+    const presenceRef = ref(db, `rooms/${roomId}/presence/${uid}`);
+    await set(presenceRef, {
+      nickname: nickname || "Sconosciuto",
+      online: true,
+      lastSeen: Date.now()
+    });
 
-    shuffle(mazzo);
-    aggiornaUI();
-  }
-
-  function azioneCima(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
-
-    // ordine A: ordine selezione originale
-    var toMove = [];
-    for(var i=0;i<selectedList.length;i++){
-      var c = getCardByRef(selectedList[i]);
-      if(c) toMove.push(c);
-    }
-
-    rimuoviSelezionateSicuro();
-
-    for(var k=toMove.length-1;k>=0;k--){
-      mazzo.unshift(toMove[k]);
-    }
-
-    aggiornaUI();
-  }
-
-  function azioneFondo(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
-
-    var toMove = [];
-    for(var i=0;i<selectedList.length;i++){
-      var c = getCardByRef(selectedList[i]);
-      if(c) toMove.push(c);
-    }
-
-    rimuoviSelezionateSicuro();
-
-    for(var k=0;k<toMove.length;k++){
-      mazzo.push(toMove[k]);
-    }
-
-    aggiornaUI();
-  }
-
-  function prendiDaScarti(){
-    if(selectedList.length===0){
-      alert("Seleziona almeno una carta!");
-      return;
-    }
-
-    var ok = false;
-    for(var i=0;i<selectedList.length;i++){
-      if(selectedList[i].zona==="scarti") ok = true;
-    }
-
-    if(!ok){
-      alert("Devi selezionare almeno una carta dagli scarti!");
-      return;
-    }
-
-    var cards = rimuoviSelezionateSicuro();
-    for(var j=0;j<cards.length;j++){
-      mano.push(cards[j]);
-    }
-
-    aggiornaUI();
-  }
-
-  function rimettiCasualeManoNelMazzo(){
-    if(mano.length === 0){
-      alert("Non hai carte in mano!");
-      return;
-    }
-
-    var index = Math.floor(Math.random() * mano.length);
-    var carta = mano.splice(index, 1)[0];
-
-    mazzo.push(carta);
-    shuffle(mazzo);
-
-    selectedList = [];
-    aggiornaUI();
-  }
-
-  function mettiPrimaria(){
-    if(selectedList.length===0){
-      alert("Seleziona una carta dalla mano!");
-      return;
-    }
-
-    var ref = null;
-    for(var i=0;i<selectedList.length;i++){
-      if(selectedList[i].zona==="mano"){
-        ref = selectedList[i];
-        break;
-      }
-    }
-
-    if(!ref){
-      alert("Devi selezionare una carta dalla mano!");
-      return;
-    }
-
-    var carta = mano.splice(ref.index,1)[0];
-
-    if(primaria) mano.push(primaria);
-    primaria = carta;
-
-    selectedList = [];
-    aggiornaUI();
-  }
-
-  function mettiSupporto(n){
-    if(selectedList.length===0){
-      alert("Seleziona una carta dalla mano!");
-      return;
-    }
-
-    var ref = null;
-    for(var i=0;i<selectedList.length;i++){
-      if(selectedList[i].zona==="mano"){
-        ref = selectedList[i];
-        break;
-      }
-    }
-
-    if(!ref){
-      alert("Devi selezionare una carta dalla mano!");
-      return;
-    }
-
-    var carta = mano.splice(ref.index,1)[0];
-
-    if(supporti[n]) mano.push(supporti[n]);
-    supporti[n] = carta;
-
-    selectedList = [];
-    aggiornaUI();
-  }
-
-  function resetGioco(){
-    mazzo = creaMazzo();
-    mano = [];
-    scarti = [];
-    primaria = null;
-    supporti = {2:null,3:null,4:null,5:null};
-    selectedList = [];
-    shuffle(mazzo);
-    aggiornaUI();
-  }
-
-  function mescolaMazzo(){
-    shuffle(mazzo);
-    aggiornaUI();
-  }
-
-  function pesca(n){
-    for(var i=0;i<n;i++){
-      if(mazzo.length===0){
-        alert("Mazzo vuoto!");
-        break;
-      }
-      mano.push(mazzo.shift());
-    }
-    aggiornaUI();
-  }
-
-  function pescaN(){
-    var n = parseInt(document.getElementById("numPesca").value);
-    if(isNaN(n) || n<1) return;
-    pesca(n);
-  }
-
-  function scartaDalMazzo(n){
-    for(var i=0;i<n;i++){
-      if(mazzo.length===0){
-        alert("Mazzo vuoto!");
-        break;
-      }
-      scarti.push(mazzo.shift());
-    }
-    aggiornaUI();
-  }
-
-  function scartaN(){
-    var n = parseInt(document.getElementById("numScarta").value);
-    if(isNaN(n) || n < 1) return;
-    scartaDalMazzo(n);
-  }
-
-  function contaTotaleCarte(){
-    var supCount = (supporti[2]?1:0)+(supporti[3]?1:0)+(supporti[4]?1:0)+(supporti[5]?1:0);
-    return mazzo.length + mano.length + scarti.length + (primaria?1:0) + supCount;
+    onDisconnect(presenceRef).set({
+      nickname: nickname || "Sconosciuto",
+      online: false,
+      lastSeen: Date.now()
+    });
   }
 
   function aggiornaUI(){
@@ -801,16 +595,12 @@
     document.getElementById("primaria").innerHTML = "";
     document.getElementById("supporti").innerHTML = "";
 
-    for(var i=0;i<mano.length;i++){
+    for(let i=0;i<mano.length;i++){
       document.getElementById("mano").appendChild(creaCartaDiv(mano[i],"mano",i));
     }
 
-    for(var j=0;j<scarti.length;j++){
-      if(scartiVisibili){
-        document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
-      } else {
-        document.getElementById("scarti").appendChild(creaCoperta("scarti",j));
-      }
+    for(let j=0;j<scarti.length;j++){
+      document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
     }
 
     if(primaria){
@@ -823,19 +613,402 @@
     if(supporti[5]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[5],"sup5",0));
 
     document.getElementById("contatori").innerText =
-      "Mazzo: " + mazzo.length +
-      " | Mano: " + mano.length +
-      " | Scarti: " + scarti.length +
-      " | Primaria: " + (primaria ? 1 : 0) +
-      " | Supporti: " +
-      ((supporti[2]?1:0)+(supporti[3]?1:0)+(supporti[4]?1:0)+(supporti[5]?1:0)) +
-      " | Totale: " + contaTotaleCarte();
+      "Mazzo: " + mazzo.length + " | Mano: " + mano.length + " | Scarti: " + scarti.length;
 
     document.getElementById("selezioneInfo").innerText =
-      "Carte selezionate: " + selectedList.length;
+      selezioni.length>0 ? ("Carte selezionate: " + selezioni.length) : "Nessuna carta selezionata";
   }
 
-  resetGioco();
+  async function resetGioco(){
+    mazzo = creaMazzo();
+    shuffle(mazzo);
+    mano = [];
+    scarti = [];
+    primaria = null;
+    supporti = {2:null,3:null,4:null,5:null};
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function mescolaMazzo(){
+    shuffle(mazzo);
+    await salvaPrivato();
+    aggiornaUI();
+  }
+
+  async function pesca(n){
+    for(let i=0;i<n;i++){
+      if(mazzo.length===0){
+        alert("Mazzo vuoto!");
+        break;
+      }
+      mano.push(mazzo.shift());
+    }
+    clearSelezione();
+    aggiornaUI();
+    await salvaPrivato();
+  }
+
+  function pescaN(){
+    const n = parseInt(document.getElementById("numPesca").value);
+    if(isNaN(n) || n<1) return;
+    pesca(n);
+  }
+
+  async function scartaDalMazzo(n){
+    for(let i=0;i<n;i++){
+      if(mazzo.length===0){
+        alert("Mazzo vuoto!");
+        break;
+      }
+      scarti.push(mazzo.shift());
+    }
+    clearSelezione();
+    aggiornaUI();
+    await salvaPrivato();
+  }
+
+  function scartaDalMazzoN(){
+    const n = parseInt(document.getElementById("numScartaMazzo").value);
+    if(isNaN(n) || n<1) return;
+    scartaDalMazzo(n);
+  }
+
+  async function mettiPrimaria(){
+    if(selezioni.length!==1 || selezioni[0].zona!=="mano"){
+      alert("Seleziona 1 carta dalla mano");
+      return;
+    }
+
+    const idx = selezioni[0].index;
+
+    if(primaria) mano.push(primaria);
+    primaria = mano.splice(idx,1)[0];
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function mettiSupporto(n){
+    if(selezioni.length!==1 || selezioni[0].zona!=="mano"){
+      alert("Seleziona 1 carta dalla mano");
+      return;
+    }
+
+    const idx = selezioni[0].index;
+
+    if(supporti[n]) mano.push(supporti[n]);
+    supporti[n] = mano.splice(idx,1)[0];
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function azioneScarta(){
+    if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
+    selezioni.sort((a,b)=>b.index-a.index);
+
+    for(const sel of selezioni){
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) scarti.push(rimuoviCartaDaZona(sel.zona, sel.index));
+    }
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function azioneMano(){
+    if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
+    selezioni.sort((a,b)=>b.index-a.index);
+
+    for(const sel of selezioni){
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mano.push(rimuoviCartaDaZona(sel.zona, sel.index));
+    }
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function azioneMazzoMescola(){
+    if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
+    selezioni.sort((a,b)=>b.index-a.index);
+
+    for(const sel of selezioni){
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona, sel.index));
+    }
+
+    shuffle(mazzo);
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function azioneCima(){
+    if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
+    selezioni.sort((a,b)=>b.index-a.index);
+
+    for(const sel of selezioni){
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.unshift(rimuoviCartaDaZona(sel.zona, sel.index));
+    }
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function azioneFondo(){
+    if(selezioni.length===0){ alert("Seleziona carte"); return; }
+
+    selezioni.sort((a,b)=>b.index-a.index);
+
+    for(const sel of selezioni){
+      const c = getCartaDaZona(sel.zona, sel.index);
+      if(c) mazzo.push(rimuoviCartaDaZona(sel.zona, sel.index));
+    }
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function rimettiCasualeManoNelMazzo(){
+    if(mano.length===0){
+      alert("Non hai carte in mano!");
+      return;
+    }
+
+    const idx = Math.floor(Math.random()*mano.length);
+    const c = mano.splice(idx,1)[0];
+
+    mazzo.push(c);
+    shuffle(mazzo);
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaPrivato();
+  }
+
+  async function resetRoomForAll(){
+    if(!roomId || !uid){
+      alert("Non sei in una stanza!");
+      return;
+    }
+
+    if(!isHost){
+      alert("Solo l'host può resettare la stanza!");
+      return;
+    }
+
+    const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
+    if(!pubSnap.exists()){
+      alert("Nessun giocatore!");
+      return;
+    }
+
+    const allPlayers = Object.keys(pubSnap.val());
+
+    for(const playerUid of allPlayers){
+      await set(ref(db, `rooms/${roomId}/private/${playerUid}`), {
+        mazzo: creaMazzo().sort(()=>Math.random()-0.5),
+        mano: [],
+        scarti: []
+      });
+
+      await set(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+        primaria: null,
+        supporti: {2:null,3:null,4:null,5:null},
+        nickname: pubSnap.val()[playerUid].nickname || "Sconosciuto"
+      });
+    }
+
+    alert("Stanza resettata per tutti!");
+  }
+
+  async function joinRoom(){
+    if(!uid){
+      alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
+      return;
+    }
+
+    if(!nickname){
+      alert("Prima imposta un nickname!");
+      return;
+    }
+
+    const name = document.getElementById("roomName").value.trim();
+    if(!name){
+      alert("Inserisci nome stanza!");
+      return;
+    }
+
+    roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    // CREA STANZA
+    const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
+    const roomMetaSnap = await get(roomMetaRef);
+
+    if(!roomMetaSnap.exists()){
+      await set(roomMetaRef, {
+        createdAt: Date.now(),
+        hostUid: uid
+      });
+    }
+
+    const meta = (await get(roomMetaRef)).val();
+    isHost = (meta.hostUid === uid);
+
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
+
+    // MAX 9 GIOCATORI
+    const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
+    const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
+
+    if(players >= 9 && (!pubSnap.val()[uid])){
+      alert("Stanza piena (max 9 giocatori).");
+      return;
+    }
+
+    document.getElementById("roomInfo").innerHTML =
+      "Connesso alla stanza: <b>" + roomId + "</b>";
+
+    // PRESENZA
+    await salvaPresenza();
+
+    // CREA DATI SE NON ESISTONO
+    const myPrivRef = ref(db, `rooms/${roomId}/private/${uid}`);
+    const myPrivSnap = await get(myPrivRef);
+
+    if(!myPrivSnap.exists()){
+      await resetGioco();
+    } else {
+      const data = myPrivSnap.val();
+      mazzo = data.mazzo || [];
+      mano = data.mano || [];
+      scarti = data.scarti || [];
+    }
+
+    const myPubRef = ref(db, `rooms/${roomId}/public/${uid}`);
+    const myPubSnap = await get(myPubRef);
+
+    if(myPubSnap.exists()){
+      const pdata = myPubSnap.val();
+      primaria = pdata.primaria || null;
+      supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
+    } else {
+      primaria = null;
+      supporti = {2:null,3:null,4:null,5:null};
+      await salvaPubblico();
+    }
+
+    clearSelezione();
+    aggiornaUI();
+
+    // LISTA GIOCATORI ONLINE
+    onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
+      const list = document.getElementById("playersList");
+      list.innerHTML = "";
+
+      if(!snap.exists()) return;
+
+      const all = snap.val();
+      for(const pUid in all){
+        const p = all[pUid];
+
+        const div = document.createElement("div");
+        div.className = "info";
+
+        div.innerHTML =
+          "<b>" + p.nickname + "</b> (" + pUid.substring(0,6) + ") - " +
+          (p.online ? "<span class='online'>ONLINE</span>" : "<span class='offline'>OFFLINE</span>");
+
+        list.appendChild(div);
+      }
+    });
+
+    // ASCOLTA ALTRI GIOCATORI PUBBLICI
+    onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
+      const playersArea = document.getElementById("playersArea");
+      playersArea.innerHTML = "";
+
+      if(!snap.exists()) return;
+
+      const all = snap.val();
+
+      for(const playerUid in all){
+        if(playerUid === uid) continue;
+
+        const pdata = all[playerUid];
+        const box = document.createElement("div");
+        box.className = "playerPublic";
+
+        const nm = document.createElement("div");
+        nm.className = "playerName";
+        nm.textContent = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
+
+        box.appendChild(nm);
+
+        const cArea = document.createElement("div");
+        cArea.className = "smallCards";
+
+        if(pdata.primaria){
+          cArea.appendChild(creaCartaDiv(pdata.primaria, "x", 0, true));
+        }
+
+        if(pdata.supporti){
+          if(pdata.supporti["2"]) cArea.appendChild(creaCartaDiv(pdata.supporti["2"], "x", 0, true));
+          if(pdata.supporti["3"]) cArea.appendChild(creaCartaDiv(pdata.supporti["3"], "x", 0, true));
+          if(pdata.supporti["4"]) cArea.appendChild(creaCartaDiv(pdata.supporti["4"], "x", 0, true));
+          if(pdata.supporti["5"]) cArea.appendChild(creaCartaDiv(pdata.supporti["5"], "x", 0, true));
+        }
+
+        box.appendChild(cArea);
+        playersArea.appendChild(box);
+      }
+    });
+  }
+
+  // LOGIN ANONIMO
+  signInAnonymously(auth);
+
+  onAuthStateChanged(auth, (user)=>{
+    if(user){
+      uid = user.uid;
+      document.getElementById("roomInfo").innerText =
+        "Loggato: " + uid.substring(0,8) + "... (inserisci nome stanza)";
+    }
+  });
+
+  // EXPORT FUNZIONI HTML
+  window.joinRoom = joinRoom;
+  window.resetGioco = resetGioco;
+  window.mescolaMazzo = mescolaMazzo;
+  window.pesca = pesca;
+  window.pescaN = pescaN;
+  window.mettiPrimaria = mettiPrimaria;
+  window.mettiSupporto = mettiSupporto;
+  window.azioneScarta = azioneScarta;
+  window.azioneMano = azioneMano;
+  window.azioneMazzoMescola = azioneMazzoMescola;
+  window.azioneCima = azioneCima;
+  window.azioneFondo = azioneFondo;
+  window.scartaDalMazzo = scartaDalMazzo;
+  window.scartaDalMazzoN = scartaDalMazzoN;
+  window.rimettiCasualeManoNelMazzo = rimettiCasualeManoNelMazzo;
+  window.resetRoomForAll = resetRoomForAll;
+
 </script>
 
 </body>
