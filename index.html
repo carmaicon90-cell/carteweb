@@ -107,7 +107,6 @@
       transform:rotate(180deg);
     }
 
-    /* SOLO NUMERO (senza seme) */
     .cornerNum{
       position:absolute;
       font-size:16px;
@@ -169,7 +168,6 @@
       border:3px solid gold;
     }
 
-    /* FIGURE */
     .faceBox{
       position:absolute;
       top:50%;
@@ -202,7 +200,6 @@
       margin-top:6px;
     }
 
-    /* ASSO SPECIALE */
     .aceBig{
       position:absolute;
       top:50%;
@@ -246,6 +243,8 @@
   <button onclick="azioneCima()">Rimetti in Cima</button>
   <button onclick="azioneFondo()">Rimetti in Fondo</button>
   <button onclick="prendiDaScarti()">Prendi dagli Scarti → Mano</button>
+  <button onclick="rimettiCasualeManoNelMazzo()">Casuale Mano → Mazzo + Mescola</button>
+  <button onclick="deselezionaTutto()">Deseleziona tutto</button>
 </div>
 
 <div class="info" id="contatori"></div>
@@ -284,10 +283,10 @@
   var primaria = null;
   var supporti = {2:null,3:null,4:null,5:null};
 
-  var selZona = null;
-  var selIndex = null;
-
   var scartiVisibili = false;
+
+  // SELEZIONE MULTIPLA: lista di oggetti {zona:"mano", index:0}
+  var selectedList = [];
 
   function creaMazzo(){
     var suits = ["H","D","C","S"];
@@ -324,38 +323,72 @@
     return "black";
   }
 
-  function deseleziona(){
-    selZona = null;
-    selIndex = null;
+  function deselezionaTutto(){
+    selectedList = [];
+    aggiornaUI();
   }
 
-  function getSelected(){
-    if(selZona==="mano") return mano[selIndex];
-    if(selZona==="scarti") return scarti[selIndex];
-    if(selZona==="primaria") return primaria;
-    if(selZona==="sup2") return supporti[2];
-    if(selZona==="sup3") return supporti[3];
-    if(selZona==="sup4") return supporti[4];
-    if(selZona==="sup5") return supporti[5];
+  function isSelected(zona, index){
+    for(var i=0;i<selectedList.length;i++){
+      if(selectedList[i].zona === zona && selectedList[i].index === index){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function toggleSelect(zona, index){
+    for(var i=0;i<selectedList.length;i++){
+      if(selectedList[i].zona === zona && selectedList[i].index === index){
+        selectedList.splice(i,1);
+        return;
+      }
+    }
+    selectedList.push({zona: zona, index: index});
+  }
+
+  function getCardByRef(ref){
+    if(ref.zona==="mano") return mano[ref.index];
+    if(ref.zona==="scarti") return scarti[ref.index];
+    if(ref.zona==="primaria") return primaria;
+    if(ref.zona==="sup2") return supporti[2];
+    if(ref.zona==="sup3") return supporti[3];
+    if(ref.zona==="sup4") return supporti[4];
+    if(ref.zona==="sup5") return supporti[5];
     return null;
   }
 
-  function removeSelected(){
-    if(selZona==="mano") return mano.splice(selIndex,1)[0];
-    if(selZona==="scarti") return scarti.splice(selIndex,1)[0];
+  function removeCardByRef(ref){
+    if(ref.zona==="mano") return mano.splice(ref.index,1)[0];
+    if(ref.zona==="scarti") return scarti.splice(ref.index,1)[0];
 
-    if(selZona==="primaria"){
+    if(ref.zona==="primaria"){
       var c = primaria;
       primaria = null;
       return c;
     }
 
-    if(selZona==="sup2"){ var c2=supporti[2]; supporti[2]=null; return c2; }
-    if(selZona==="sup3"){ var c3=supporti[3]; supporti[3]=null; return c3; }
-    if(selZona==="sup4"){ var c4=supporti[4]; supporti[4]=null; return c4; }
-    if(selZona==="sup5"){ var c5=supporti[5]; supporti[5]=null; return c5; }
+    if(ref.zona==="sup2"){ var c2=supporti[2]; supporti[2]=null; return c2; }
+    if(ref.zona==="sup3"){ var c3=supporti[3]; supporti[3]=null; return c3; }
+    if(ref.zona==="sup4"){ var c4=supporti[4]; supporti[4]=null; return c4; }
+    if(ref.zona==="sup5"){ var c5=supporti[5]; supporti[5]=null; return c5; }
 
     return null;
+  }
+
+  function fixIndexesAfterRemove(){
+    // dopo una rimozione gli indici cambiano, quindi ricostruiamo la selezione
+    var newList = [];
+
+    for(var i=0;i<selectedList.length;i++){
+      var ref = selectedList[i];
+      var card = getCardByRef(ref);
+      if(card){
+        newList.push(ref);
+      }
+    }
+
+    selectedList = newList;
   }
 
   function creaCorner(v, sym, className){
@@ -438,13 +471,12 @@
     var div = document.createElement("div");
     div.className = "card " + col;
 
-    if(selZona===zona && selIndex===index){
+    if(isSelected(zona,index)){
       div.classList.add("selected");
     }
 
     div.onclick = function(){
-      selZona = zona;
-      selIndex = index;
+      toggleSelect(zona,index);
       aggiornaUI();
     };
 
@@ -481,13 +513,12 @@
     var div = document.createElement("div");
     div.className = "cardBack";
 
-    if(selZona===zona && selIndex===index){
+    if(isSelected(zona,index)){
       div.classList.add("selected");
     }
 
     div.onclick = function(){
-      selZona = zona;
-      selIndex = index;
+      toggleSelect(zona,index);
       aggiornaUI();
     };
 
@@ -496,59 +527,203 @@
 
   function toggleScarti(){
     scartiVisibili = !scartiVisibili;
-    deseleziona();
+    aggiornaUI();
+  }
+
+  function azioneScarta(){
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
+      return;
+    }
+
+    // rimuove in ordine inverso per non rompere gli indici
+    for(var i=selectedList.length-1;i>=0;i--){
+      var ref = selectedList[i];
+      var carta = removeCardByRef(ref);
+      if(carta) scarti.push(carta);
+    }
+
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function azioneMano(){
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
+      return;
+    }
+
+    for(var i=selectedList.length-1;i>=0;i--){
+      var ref = selectedList[i];
+      var carta = removeCardByRef(ref);
+      if(carta) mano.push(carta);
+    }
+
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function azioneMazzoMescola(){
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
+      return;
+    }
+
+    for(var i=selectedList.length-1;i>=0;i--){
+      var ref = selectedList[i];
+      var carta = removeCardByRef(ref);
+      if(carta) mazzo.push(carta);
+    }
+
+    shuffle(mazzo);
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function azioneCima(){
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
+      return;
+    }
+
+    // ordine A: rispetta ordine selezione
+    var toMove = [];
+    for(var i=0;i<selectedList.length;i++){
+      var carta = getCardByRef(selectedList[i]);
+      if(carta) toMove.push(carta);
+    }
+
+    // rimuovo effettivamente (indietro per sicurezza)
+    for(var j=selectedList.length-1;j>=0;j--){
+      removeCardByRef(selectedList[j]);
+    }
+
+    // in cima: unshift al contrario per mantenere ordine selezione
+    for(var k=toMove.length-1;k>=0;k--){
+      mazzo.unshift(toMove[k]);
+    }
+
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function azioneFondo(){
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
+      return;
+    }
+
+    var toMove = [];
+    for(var i=0;i<selectedList.length;i++){
+      var carta = getCardByRef(selectedList[i]);
+      if(carta) toMove.push(carta);
+    }
+
+    for(var j=selectedList.length-1;j>=0;j--){
+      removeCardByRef(selectedList[j]);
+    }
+
+    for(var k=0;k<toMove.length;k++){
+      mazzo.push(toMove[k]);
+    }
+
+    selectedList = [];
     aggiornaUI();
   }
 
   function prendiDaScarti(){
-    if(!scartiVisibili){
-      alert("Devi prima mostrare gli scarti!");
+    if(selectedList.length===0){
+      alert("Seleziona almeno una carta!");
       return;
     }
 
-    if(selZona !== "scarti"){
-      alert("Seleziona una carta dagli scarti!");
-      return;
-    }
-
-    mano.push(scarti.splice(selIndex,1)[0]);
-    deseleziona();
-    aggiornaUI();
-  }
-
-  function aggiornaUI(){
-    document.getElementById("mano").innerHTML = "";
-    document.getElementById("scarti").innerHTML = "";
-    document.getElementById("primaria").innerHTML = "";
-    document.getElementById("supporti").innerHTML = "";
-
-    for(var i=0;i<mano.length;i++){
-      document.getElementById("mano").appendChild(creaCartaDiv(mano[i],"mano",i));
-    }
-
-    for(var j=0;j<scarti.length;j++){
-      if(scartiVisibili){
-        document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
-      } else {
-        document.getElementById("scarti").appendChild(creaCoperta("scarti",j));
+    var soloScarti = [];
+    for(var i=0;i<selectedList.length;i++){
+      if(selectedList[i].zona==="scarti"){
+        soloScarti.push(selectedList[i]);
       }
     }
 
-    if(primaria){
-      document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+    if(soloScarti.length===0){
+      alert("Seleziona almeno una carta dagli scarti!");
+      return;
     }
 
-    if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
-    if(supporti[3]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[3],"sup3",0));
-    if(supporti[4]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[4],"sup4",0));
-    if(supporti[5]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[5],"sup5",0));
+    // rimuove in ordine inverso
+    for(var j=soloScarti.length-1;j>=0;j--){
+      mano.push(removeCardByRef(soloScarti[j]));
+    }
 
-    document.getElementById("contatori").innerText =
-      "Mazzo: " + mazzo.length + " | Mano: " + mano.length + " | Scarti: " + scarti.length;
+    selectedList = [];
+    aggiornaUI();
+  }
 
-    var sel = getSelected();
-    document.getElementById("selezioneInfo").innerText =
-      sel ? ("Selezionata: " + selZona) : "Nessuna carta selezionata";
+  function rimettiCasualeManoNelMazzo(){
+    if(mano.length === 0){
+      alert("Non hai carte in mano!");
+      return;
+    }
+
+    var index = Math.floor(Math.random() * mano.length);
+    var carta = mano.splice(index, 1)[0];
+
+    mazzo.push(carta);
+    shuffle(mazzo);
+
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function mettiPrimaria(){
+    if(selectedList.length===0){
+      alert("Seleziona una carta dalla mano!");
+      return;
+    }
+
+    var ref = null;
+    for(var i=0;i<selectedList.length;i++){
+      if(selectedList[i].zona==="mano"){
+        ref = selectedList[i];
+        break;
+      }
+    }
+
+    if(!ref){
+      alert("Devi selezionare una carta dalla mano!");
+      return;
+    }
+
+    if(primaria) mano.push(primaria);
+    primaria = mano.splice(ref.index,1)[0];
+
+    selectedList = [];
+    aggiornaUI();
+  }
+
+  function mettiSupporto(n){
+    if(selectedList.length===0){
+      alert("Seleziona una carta dalla mano!");
+      return;
+    }
+
+    var ref = null;
+    for(var i=0;i<selectedList.length;i++){
+      if(selectedList[i].zona==="mano"){
+        ref = selectedList[i];
+        break;
+      }
+    }
+
+    if(!ref){
+      alert("Devi selezionare una carta dalla mano!");
+      return;
+    }
+
+    if(supporti[n]) mano.push(supporti[n]);
+    supporti[n] = mano.splice(ref.index,1)[0];
+
+    selectedList = [];
+    aggiornaUI();
   }
 
   function resetGioco(){
@@ -557,7 +732,7 @@
     scarti = [];
     primaria = null;
     supporti = {2:null,3:null,4:null,5:null};
-    deseleziona();
+    selectedList = [];
     shuffle(mazzo);
     aggiornaUI();
   }
@@ -601,65 +776,38 @@
     scartaDalMazzo(n);
   }
 
-  function mettiPrimaria(){
-    if(selZona!=="mano"){ alert("Seleziona una carta dalla mano"); return; }
-    if(primaria) mano.push(primaria);
-    primaria = mano.splice(selIndex,1)[0];
-    deseleziona();
-    aggiornaUI();
-  }
+  function aggiornaUI(){
+    document.getElementById("mano").innerHTML = "";
+    document.getElementById("scarti").innerHTML = "";
+    document.getElementById("primaria").innerHTML = "";
+    document.getElementById("supporti").innerHTML = "";
 
-  function mettiSupporto(n){
-    if(selZona!=="mano"){ alert("Seleziona una carta dalla mano"); return; }
-    if(supporti[n]) mano.push(supporti[n]);
-    supporti[n] = mano.splice(selIndex,1)[0];
-    deseleziona();
-    aggiornaUI();
-  }
+    for(var i=0;i<mano.length;i++){
+      document.getElementById("mano").appendChild(creaCartaDiv(mano[i],"mano",i));
+    }
 
-  function azioneScarta(){
-    var c = getSelected();
-    if(!c){ alert("Seleziona una carta"); return; }
-    scarti.push(removeSelected());
-    deseleziona();
-    aggiornaUI();
-  }
+    for(var j=0;j<scarti.length;j++){
+      if(scartiVisibili){
+        document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
+      } else {
+        document.getElementById("scarti").appendChild(creaCoperta("scarti",j));
+      }
+    }
 
-  function azioneMano(){
-    var c = getSelected();
-    if(!c){ alert("Seleziona una carta"); return; }
-    mano.push(removeSelected());
-    deseleziona();
-    aggiornaUI();
-  }
+    if(primaria){
+      document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+    }
 
-  function azioneMazzoMescola(){
-    var c = getSelected();
-    if(!c){ alert("Seleziona una carta"); return; }
-    mazzo.push(removeSelected());
-    shuffle(mazzo);
-    deseleziona();
-    aggiornaUI();
-  }
+    if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
+    if(supporti[3]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[3],"sup3",0));
+    if(supporti[4]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[4],"sup4",0));
+    if(supporti[5]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[5],"sup5",0));
 
-  /* CORRETTO: CIMA = unshift */
-  function azioneCima(){
-    var c = getSelected();
-    if(!c){ alert("Seleziona una carta"); return; }
+    document.getElementById("contatori").innerText =
+      "Mazzo: " + mazzo.length + " | Mano: " + mano.length + " | Scarti: " + scarti.length;
 
-    mazzo.unshift(removeSelected());
-    deseleziona();
-    aggiornaUI();
-  }
-
-  /* CORRETTO: FONDO = push */
-  function azioneFondo(){
-    var c = getSelected();
-    if(!c){ alert("Seleziona una carta"); return; }
-
-    mazzo.push(removeSelected());
-    deseleziona();
-    aggiornaUI();
+    document.getElementById("selezioneInfo").innerText =
+      "Carte selezionate: " + selectedList.length;
   }
 
   resetGioco();
