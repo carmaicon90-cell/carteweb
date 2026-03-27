@@ -380,6 +380,9 @@
   let selezioni = [];
   let scartiVisibili = false;
 
+  let logsListenerStarted = false;
+  let chatListenerStarted = false;
+
   document.getElementById("nickname").value = nickname;
   document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
 
@@ -407,6 +410,7 @@
 
   async function aggiungiLog(testo){
     if(!roomId || !uid) return;
+
     await push(ref(db, `rooms/${roomId}/logs`), {
       testo: testo,
       nickname: nickname || "Sconosciuto",
@@ -416,6 +420,11 @@
   }
 
   async function inviaChat(){
+    if(!roomId || !uid){
+      alert("Entra in una stanza!");
+      return;
+    }
+
     const msg = document.getElementById("chatInput").value.trim();
     if(!msg){
       alert("Scrivi un messaggio!");
@@ -440,7 +449,13 @@
     }
 
     await remove(ref(db, `rooms/${roomId}/logs`));
-    await aggiungiLog("ha pulito il LOG");
+
+    await push(ref(db, `rooms/${roomId}/logs`), {
+      testo: "ha pulito il LOG",
+      nickname: nickname || "Sconosciuto",
+      uid: uid,
+      time: Date.now()
+    });
   }
   window.pulisciLog = pulisciLog;
 
@@ -1096,6 +1111,90 @@
     await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
   }
 
+  function startLogsListener(){
+    if(logsListenerStarted) return;
+    logsListenerStarted = true;
+
+    onValue(ref(db, `rooms/${roomId}/logs`), (snap)=>{
+      const logArea = document.getElementById("logArea");
+      logArea.innerHTML = "";
+
+      if(!snap.exists()){
+        logArea.innerHTML = "<i>Nessuna mossa ancora...</i>";
+        return;
+      }
+
+      const logs = snap.val();
+      const keys = Object.keys(logs);
+
+      keys.sort((a,b)=>logs[a].time - logs[b].time);
+
+      for(const k of keys){
+        const l = logs[k];
+
+        const d = new Date(l.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (hostUid && l.uid === hostUid);
+        const col = coloreDaUID(l.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          ⏱ <b>${ora}</b> - 
+          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
+          ${l.testo}
+        `;
+
+        logArea.appendChild(div);
+      }
+
+      logArea.scrollTop = logArea.scrollHeight;
+    });
+  }
+
+  function startChatListener(){
+    if(chatListenerStarted) return;
+    chatListenerStarted = true;
+
+    onValue(ref(db, `rooms/${roomId}/chat`), (snap)=>{
+      const chatArea = document.getElementById("chatArea");
+      chatArea.innerHTML = "";
+
+      if(!snap.exists()){
+        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
+        return;
+      }
+
+      const msgs = snap.val();
+      const keys = Object.keys(msgs);
+
+      keys.sort((a,b)=>msgs[a].time - msgs[b].time);
+
+      for(const k of keys){
+        const m = msgs[k];
+
+        const d = new Date(m.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (hostUid && m.uid === hostUid);
+        const col = coloreDaUID(m.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          💬 <b>${ora}</b> - 
+          <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: 
+          ${m.testo}
+        `;
+
+        chatArea.appendChild(div);
+      }
+
+      chatArea.scrollTop = chatArea.scrollHeight;
+    });
+  }
+
   async function joinRoom(){
     if(!uid){
       alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
@@ -1119,7 +1218,6 @@
     }
 
     alreadyJoined = true;
-
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1133,8 +1231,8 @@
     }
 
     const meta = (await get(roomMetaRef)).val();
-    isHost = (meta.hostUid === uid);
     hostUid = meta.hostUid;
+    isHost = (hostUid === uid);
 
     document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
 
@@ -1178,9 +1276,11 @@
     }
 
     await salvaPubblico();
-
     clearSelezione();
     aggiornaUI();
+
+    startLogsListener();
+    startChatListener();
 
     await aggiungiLog("è entrato nella stanza");
 
@@ -1226,80 +1326,6 @@
 
       document.getElementById("playerCountInfo").innerText =
         "Giocatori online: " + onlineCount + " / 9";
-    });
-
-    onValue(ref(db, `rooms/${roomId}/logs`), (snap)=>{
-      const logArea = document.getElementById("logArea");
-      logArea.innerHTML = "";
-
-      if(!snap.exists()){
-        logArea.innerHTML = "<i>Nessuna mossa ancora...</i>";
-        return;
-      }
-
-      const logs = snap.val();
-      const keys = Object.keys(logs);
-
-      keys.sort((a,b)=>logs[a].time - logs[b].time);
-
-      for(const k of keys){
-        const l = logs[k];
-
-        const d = new Date(l.time);
-        const ora = d.toLocaleTimeString("it-IT");
-
-        const isHostPlayer = (l.uid === hostUid);
-        const col = coloreDaUID(l.uid, isHostPlayer);
-        const crown = isHostPlayer ? " 👑" : "";
-
-        const div = document.createElement("div");
-        div.innerHTML = `
-          ⏱ <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
-          ${l.testo}
-        `;
-
-        logArea.appendChild(div);
-      }
-
-      logArea.scrollTop = logArea.scrollHeight;
-    });
-
-    onValue(ref(db, `rooms/${roomId}/chat`), (snap)=>{
-      const chatArea = document.getElementById("chatArea");
-      chatArea.innerHTML = "";
-
-      if(!snap.exists()){
-        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
-        return;
-      }
-
-      const msgs = snap.val();
-      const keys = Object.keys(msgs);
-
-      keys.sort((a,b)=>msgs[a].time - msgs[b].time);
-
-      for(const k of keys){
-        const m = msgs[k];
-
-        const d = new Date(m.time);
-        const ora = d.toLocaleTimeString("it-IT");
-
-        const isHostPlayer = (m.uid === hostUid);
-        const col = coloreDaUID(m.uid, isHostPlayer);
-        const crown = isHostPlayer ? " 👑" : "";
-
-        const div = document.createElement("div");
-        div.innerHTML = `
-          💬 <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: 
-          ${m.testo}
-        `;
-
-        chatArea.appendChild(div);
-      }
-
-      chatArea.scrollTop = chatArea.scrollHeight;
     });
 
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
