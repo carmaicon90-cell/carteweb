@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Carte</title>
+  <title>Mazzo Carte</title>
 
   <style>
     body{
       margin:0;
-      font-family:Arial;
+      font-family:Arial, sans-serif;
       background:#0e0e0e;
       color:white;
       text-align:center;
     }
-    h2{margin:10px 0}
+
+    h2{margin:10px 0;}
 
     .zone{
       background:#1b1b1b;
@@ -64,71 +65,133 @@
     }
 
     .card{
-      width:70px;
-      height:100px;
-      border-radius:10px;
-      background:white;
+      width:85px;
+      height:125px;
+      border-radius:14px;
+      background:linear-gradient(#ffffff,#f1f1f1);
       cursor:pointer;
       position:relative;
-      border:3px solid transparent;
-      box-shadow:0 2px 6px rgba(0,0,0,0.7);
+      border:2px solid #ddd;
+      box-shadow:0 4px 10px rgba(0,0,0,0.7);
       user-select:none;
+      overflow:hidden;
     }
 
-    .selected{
+    .card.selected{
       border:3px solid gold;
     }
 
-    .top{
+    .corner{
       position:absolute;
-      top:5px;
-      left:6px;
       font-size:14px;
       font-weight:bold;
+      text-align:center;
+      width:28px;
+      line-height:14px;
     }
 
-    .bottom{
-      position:absolute;
-      bottom:5px;
+    .corner .suit{
+      display:block;
+      font-size:18px;
+      margin-top:2px;
+    }
+
+    .top-left{
+      top:6px;
+      left:6px;
+    }
+
+    .bottom-right{
+      bottom:6px;
       right:6px;
-      font-size:14px;
-      font-weight:bold;
       transform:rotate(180deg);
     }
 
-    .center{
+    .pip{
+      position:absolute;
+      font-size:22px;
+      opacity:0.95;
+      transform:translate(-50%,-50%);
+    }
+
+    .red{ color:#d00000; }
+    .black{ color:#000; }
+
+    .cardBack{
+      width:85px;
+      height:125px;
+      border-radius:14px;
+      background:repeating-linear-gradient(
+        45deg,
+        #002a66,
+        #002a66 10px,
+        #0047ab 10px,
+        #0047ab 20px
+      );
+      border:2px solid #ddd;
+      cursor:pointer;
+      position:relative;
+      box-shadow:0 4px 10px rgba(0,0,0,0.7);
+      overflow:hidden;
+    }
+
+    .cardBack::after{
+      content:"★";
       position:absolute;
       top:50%;
       left:50%;
       transform:translate(-50%,-50%);
-      font-size:32px;
+      font-size:55px;
+      color:rgba(255,255,255,0.6);
+    }
+
+    .cardBack.selected{
+      border:3px solid gold;
+    }
+
+    /* FIGURE */
+    .faceBox{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:64px;
+      height:84px;
+      border-radius:12px;
+      border:2px solid rgba(0,0,0,0.25);
+      background:linear-gradient(180deg,#ffffff,#eaeaea);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
       font-weight:bold;
     }
 
-    .red{color:#d00000;}
-    .black{color:#000;}
-
-    .cardBack{
-      width:70px;
-      height:100px;
-      border-radius:10px;
-      background:linear-gradient(45deg,#0047ab,#001f4d);
-      border:3px solid #cfcfcf;
-      cursor:pointer;
-      position:relative;
-      box-shadow:0 2px 6px rgba(0,0,0,0.7);
+    .faceBox .icon{
+      font-size:28px;
+      margin-bottom:6px;
     }
 
-    .cardBack::after{
-      content:"";
+    .faceBox .letter{
+      font-size:34px;
+      line-height:34px;
+    }
+
+    .faceBox .suit{
+      font-size:26px;
+      margin-top:6px;
+    }
+
+    /* ASSO SPECIALE */
+    .aceBig{
       position:absolute;
-      top:10px;
-      left:10px;
-      right:10px;
-      bottom:10px;
-      border-radius:8px;
-      border:2px dashed rgba(255,255,255,0.6);
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:70px;
+      opacity:0.95;
     }
+
   </style>
 </head>
 
@@ -197,9 +260,10 @@
     var suits = ["H","D","C","S"];
     var values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
     var m = [];
+
     for(var i=0;i<suits.length;i++){
       for(var j=0;j<values.length;j++){
-        m.push(values[j] + suits[i]);
+        m.push({ valore: values[j], seme: suits[i] });
       }
     }
     return m;
@@ -215,14 +279,14 @@
   }
 
   function simbolo(seme){
-    if(seme==="H") return "&hearts;";
-    if(seme==="D") return "&diams;";
-    if(seme==="C") return "&clubs;";
-    if(seme==="S") return "&spades;";
+    if(seme==="H") return "♥";
+    if(seme==="D") return "♦";
+    if(seme==="C") return "♣";
+    if(seme==="S") return "♠";
     return "?";
   }
 
-  function colore(seme){
+  function coloreClasse(seme){
     if(seme==="H" || seme==="D") return "red";
     return "black";
   }
@@ -261,16 +325,82 @@
     return null;
   }
 
+  function creaCorner(v, sym, className){
+    var corner = document.createElement("div");
+    corner.className = "corner " + className;
+    corner.innerHTML = v + "<span class='suit'>" + sym + "</span>";
+    return corner;
+  }
+
+  function creaPip(sym, x, y, rot){
+    var pip = document.createElement("div");
+    pip.className = "pip";
+    pip.textContent = sym;
+    pip.style.left = x + "%";
+    pip.style.top = y + "%";
+    pip.style.transform = "translate(-50%,-50%) rotate(" + rot + "deg)";
+    return pip;
+  }
+
+  function aggiungiPips(div, valore, sym){
+    var layouts = {
+      2: [[50,28,0],[50,82,180]],
+      3: [[50,28,0],[50,55,0],[50,82,180]],
+      4: [[30,28,0],[70,28,0],[30,82,180],[70,82,180]],
+      5: [[30,28,0],[70,28,0],[50,55,0],[30,82,180],[70,82,180]],
+      6: [[30,28,0],[70,28,0],[30,55,0],[70,55,0],[30,82,180],[70,82,180]],
+      7: [[30,28,0],[70,28,0],[30,55,0],[70,55,0],[30,82,180],[70,82,180],[50,42,0]],
+      8: [[30,28,0],[70,28,0],[30,55,0],[70,55,0],[30,82,180],[70,82,180],[50,42,0],[50,68,180]],
+      9: [[30,25,0],[70,25,0],[30,50,0],[70,50,0],[30,75,180],[70,75,180],[50,37,0],[50,63,180],[50,55,0]],
+      10:[[30,22,0],[70,22,0],[30,42,0],[70,42,0],[30,62,180],[70,62,180],[30,82,180],[70,82,180],[50,32,0],[50,72,180]]
+    };
+
+    var pts = layouts[valore];
+    if(!pts) return;
+
+    for(var i=0;i<pts.length;i++){
+      div.appendChild(creaPip(sym, pts[i][0], pts[i][1], pts[i][2]));
+    }
+  }
+
+  function creaFace(v, sym, col){
+    var box = document.createElement("div");
+    box.className = "faceBox";
+    box.style.color = (col==="red") ? "#d00000" : "#000";
+
+    var icon = document.createElement("div");
+    icon.className = "icon";
+
+    if(v==="J") icon.textContent = "⚔";
+    if(v==="Q") icon.textContent = "♛";
+    if(v==="K") icon.textContent = "♚";
+
+    var letter = document.createElement("div");
+    letter.className = "letter";
+    letter.textContent = v;
+
+    var suit = document.createElement("div");
+    suit.className = "suit";
+    suit.textContent = sym;
+
+    box.appendChild(icon);
+    box.appendChild(letter);
+    box.appendChild(suit);
+
+    return box;
+  }
+
   function creaCartaDiv(carta,zona,index){
-    var v = carta.slice(0, -1);
-    var s = carta.slice(-1);
+    var v = carta.valore;
+    var s = carta.seme;
     var sym = simbolo(s);
+    var col = coloreClasse(s);
 
     var div = document.createElement("div");
-    div.className = "card " + colore(s);
+    div.className = "card " + col;
 
     if(selZona===zona && selIndex===index){
-      div.className += " selected";
+      div.classList.add("selected");
     }
 
     div.onclick = function(){
@@ -279,21 +409,27 @@
       aggiornaUI();
     };
 
-    var top = document.createElement("div");
-    top.className = "top";
-    top.innerHTML = v + sym;
+    div.appendChild(creaCorner(v, sym, "top-left"));
+    div.appendChild(creaCorner(v, sym, "bottom-right"));
 
-    var center = document.createElement("div");
-    center.className = "center";
-    center.innerHTML = sym;
+    if(v==="J" || v==="Q" || v==="K"){
+      div.appendChild(creaFace(v, sym, col));
+      return div;
+    }
 
-    var bottom = document.createElement("div");
-    bottom.className = "bottom";
-    bottom.innerHTML = v + sym;
+    if(v==="A"){
+      var big = document.createElement("div");
+      big.className = "aceBig";
+      big.textContent = sym;
+      div.appendChild(big);
 
-    div.appendChild(top);
-    div.appendChild(center);
-    div.appendChild(bottom);
+      div.appendChild(creaPip(sym, 50, 32, 0));
+      div.appendChild(creaPip(sym, 50, 78, 180));
+      return div;
+    }
+
+    var num = parseInt(v);
+    aggiungiPips(div, num, sym);
 
     return div;
   }
@@ -303,7 +439,7 @@
     div.className = "cardBack";
 
     if(selZona===zona && selIndex===index){
-      div.style.border = "3px solid gold";
+      div.classList.add("selected");
     }
 
     div.onclick = function(){
@@ -343,7 +479,7 @@
 
     var sel = getSelected();
     document.getElementById("selezioneInfo").innerText =
-      sel ? ("Selezionata: " + selZona + " (" + sel + ")") : "Nessuna carta selezionata";
+      sel ? ("Selezionata: " + selZona) : "Nessuna carta selezionata";
   }
 
   function resetGioco(){
@@ -389,10 +525,8 @@
 
   function mettiSupporto(n){
     if(selZona!=="mano"){ alert("Seleziona una carta dalla mano"); return; }
-
     if(supporti[n]) mano.push(supporti[n]);
     supporti[n] = mano.splice(selIndex,1)[0];
-
     deseleziona();
     aggiornaUI();
   }
