@@ -665,6 +665,25 @@
     });
   }
 
+  async function hostTogglePrimaria(playerUid, scopri){
+    if(!roomId) return;
+
+    if(!isHost){
+      alert("Solo l'host può farlo!");
+      return;
+    }
+
+    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+      primariaCoperta: !scopri
+    });
+
+    if(playerUid === uid){
+      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la propria PRIMARIA");
+    } else {
+      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la PRIMARIA di un giocatore");
+    }
+  }
+
   function aggiornaUI(){
     document.getElementById("mano").innerHTML = "";
     document.getElementById("scarti").innerHTML = "";
@@ -689,31 +708,21 @@
       } else {
         document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
       }
+    }
 
-      if(isHost){
-        const btnShow = document.createElement("button");
-        btnShow.textContent = "Scopri Primaria";
-        btnShow.className = "greenBtn";
-        btnShow.onclick = async () => {
-          primariaCoperta = false;
-          await salvaPubblico();
-          await aggiungiLog("ha scoperto la propria PRIMARIA");
-          aggiornaUI();
-        };
+    if(isHost && primaria){
+      const btnShow = document.createElement("button");
+      btnShow.textContent = "Scopri Primaria";
+      btnShow.className = "greenBtn";
+      btnShow.onclick = () => hostTogglePrimaria(uid, true);
 
-        const btnHide = document.createElement("button");
-        btnHide.textContent = "Copri Primaria";
-        btnHide.className = "redBtn";
-        btnHide.onclick = async () => {
-          primariaCoperta = true;
-          await salvaPubblico();
-          await aggiungiLog("ha coperto la propria PRIMARIA");
-          aggiornaUI();
-        };
+      const btnHide = document.createElement("button");
+      btnHide.textContent = "Copri Primaria";
+      btnHide.className = "redBtn";
+      btnHide.onclick = () => hostTogglePrimaria(uid, false);
 
-        document.getElementById("primaria").appendChild(btnShow);
-        document.getElementById("primaria").appendChild(btnHide);
-      }
+      document.getElementById("primaria").appendChild(btnShow);
+      document.getElementById("primaria").appendChild(btnHide);
     }
 
     if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
@@ -1026,19 +1035,6 @@
     alert("Stanza resettata per tutti!");
   }
 
-  async function hostTogglePrimaria(playerUid, scopri){
-    if(!isHost){
-      alert("Solo host!");
-      return;
-    }
-
-    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
-      primariaCoperta: !scopri
-    });
-
-    await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
-  }
-
   async function joinRoom(){
     if(!uid){
       alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
@@ -1061,8 +1057,6 @@
       return;
     }
 
-    alreadyJoined = true;
-
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1079,8 +1073,6 @@
     isHost = (meta.hostUid === uid);
     hostUid = meta.hostUid;
 
-    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
-
     const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
     const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
 
@@ -1088,6 +1080,10 @@
       alert("Stanza piena (max 9 giocatori).");
       return;
     }
+
+    alreadyJoined = true;
+
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
 
     document.getElementById("roomInfo").innerHTML =
       "Connesso alla stanza: <b>" + roomId + "</b>";
