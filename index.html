@@ -389,6 +389,7 @@
     return box;
   }
 
+  // VERSIONE: numeriche senza angoli, asso e figure con angoli
   function creaCartaDiv(carta,zona,index){
     var v = carta.valore;
     var s = carta.seme;
@@ -408,15 +409,19 @@
       aggiornaUI();
     };
 
-    div.appendChild(creaCorner(v, sym, "top-left"));
-    div.appendChild(creaCorner(v, sym, "bottom-right"));
-
+    // FIGURE con angoli
     if(v==="J" || v==="Q" || v==="K"){
+      div.appendChild(creaCorner(v, sym, "top-left"));
+      div.appendChild(creaCorner(v, sym, "bottom-right"));
       div.appendChild(creaFace(v, sym, col));
       return div;
     }
 
+    // ASSO con angoli
     if(v==="A"){
+      div.appendChild(creaCorner(v, sym, "top-left"));
+      div.appendChild(creaCorner(v, sym, "bottom-right"));
+
       var big = document.createElement("div");
       big.className = "aceBig";
       big.textContent = sym;
@@ -427,9 +432,9 @@
       return div;
     }
 
+    // NUMERICHE (2-10) senza angoli
     var num = parseInt(v);
     aggiungiPips(div, num, sym);
-
     return div;
   }
 
