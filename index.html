@@ -142,6 +142,38 @@
       opacity:0.95;
     }
 
+    .cardBack{
+      width:85px;
+      height:125px;
+      border-radius:14px;
+      background:repeating-linear-gradient(
+        45deg,
+        #002a66,
+        #002a66 10px,
+        #0047ab 10px,
+        #0047ab 20px
+      );
+      border:2px solid #ddd;
+      cursor:pointer;
+      position:relative;
+      box-shadow:0 4px 10px rgba(0,0,0,0.7);
+      overflow:hidden;
+    }
+
+    .cardBack::after{
+      content:"★";
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:55px;
+      color:rgba(255,255,255,0.6);
+    }
+
+    .cardBack.selected{
+      border:3px solid gold;
+    }
+
     .playersBox{
       background:#111;
       margin:10px;
@@ -183,38 +215,6 @@
 
     .online{ color:#00ff66; font-weight:bold; }
     .offline{ color:#ff5555; font-weight:bold; }
-
-    .cardBack{
-      width:85px;
-      height:125px;
-      border-radius:14px;
-      background:repeating-linear-gradient(
-        45deg,
-        #002a66,
-        #002a66 10px,
-        #0047ab 10px,
-        #0047ab 20px
-      );
-      border:2px solid #ddd;
-      cursor:pointer;
-      position:relative;
-      box-shadow:0 4px 10px rgba(0,0,0,0.7);
-      overflow:hidden;
-    }
-
-    .cardBack::after{
-      content:"★";
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      font-size:55px;
-      color:rgba(255,255,255,0.6);
-    }
-
-    .cardBack.selected{
-      border:3px solid gold;
-    }
   </style>
 </head>
 
@@ -261,6 +261,11 @@
 </div>
 
 <div class="zone">
+  <div class="title">SCARTI (PRIVATI)</div>
+  <button onclick="toggleMostraScarti()" class="greenBtn">Mostra/Nascondi Scarti</button>
+</div>
+
+<div class="zone">
   <div class="title">AZIONI SELEZIONE (MULTI)</div>
   <button onclick="azioneScarta()">Scarta</button>
   <button onclick="azioneMano()">Rimetti in Mano</button>
@@ -268,6 +273,8 @@
   <button onclick="azioneCima()">Rimetti in Cima</button>
   <button onclick="azioneFondo()">Rimetti in Fondo</button>
   <button onclick="rimettiCasualeManoNelMazzo()">Rimetti casuale dalla mano + mescola</button>
+  <button onclick="rimettiCasualeScartiNelMazzo()">Rimetti casuale dagli scarti + mescola</button>
+  <button onclick="rimettiTuttiScartiNelMazzo()">Rimetti TUTTI gli scarti + mescola</button>
 </div>
 
 <div class="info" id="contatori"></div>
@@ -295,8 +302,6 @@
 
 <div class="zone">
   <div class="title">SCARTI (PRIVATI)</div>
-  <button onclick="mostraScarti()" class="greenBtn">Mostra Scarti</button>
-  <button onclick="nascondiScarti()" class="redBtn">Nascondi Scarti</button>
   <div class="cards" id="scarti"></div>
 </div>
 
@@ -340,15 +345,12 @@
   let mazzo = [];
   let mano = [];
   let scarti = [];
-
   let primaria = null;
   let primariaCoperta = true;
-
   let supporti = {2:null,3:null,4:null,5:null};
 
   let selezioni = [];
-
-  let scartiVisibili = false;
+  let mostraScarti = false;
 
   document.getElementById("nickname").value = nickname;
   document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
@@ -364,19 +366,6 @@
     document.getElementById("nickInfo").innerText = "Nickname: " + nickname;
   }
   window.salvaNickname = salvaNickname;
-
-  function mostraScarti(){
-    scartiVisibili = true;
-    aggiornaUI();
-  }
-
-  function nascondiScarti(){
-    scartiVisibili = false;
-    aggiornaUI();
-  }
-
-  window.mostraScarti = mostraScarti;
-  window.nascondiScarti = nascondiScarti;
 
   function creaMazzo(){
     const suits = ["H","D","C","S"];
@@ -581,13 +570,19 @@
     return div;
   }
 
-  function creaCoperta(clickable=false, onClickFn=null){
+  function creaCoperta(selezionabile=true, zona="x", index=0){
     const div = document.createElement("div");
     div.className = "cardBack";
 
-    if(clickable){
-      div.style.border = "3px solid gold";
-      div.onclick = onClickFn;
+    if(selezionabile){
+      if(stessaSelezione(zona,index)){
+        div.classList.add("selected");
+      }
+
+      div.onclick = function(){
+        toggleSelezione(zona,index);
+        aggiornaUI();
+      };
     }
 
     return div;
@@ -654,17 +649,18 @@
       document.getElementById("mano").appendChild(creaCartaDiv(mano[i],"mano",i));
     }
 
+    // SCARTI PRIVATI: COPERTI DI DEFAULT, MOSTRABILI CON BOTTONE
     for(let j=0;j<scarti.length;j++){
-      if(scartiVisibili){
+      if(mostraScarti){
         document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
       } else {
-        document.getElementById("scarti").appendChild(creaCoperta());
+        document.getElementById("scarti").appendChild(creaCoperta(true,"scarti",j));
       }
     }
 
     if(primaria){
       if(primariaCoperta){
-        document.getElementById("primaria").appendChild(creaCoperta());
+        document.getElementById("primaria").appendChild(creaCoperta(false));
       } else {
         document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
       }
@@ -772,8 +768,8 @@
     const idx = selezioni[0].index;
 
     if(primaria) mano.push(primaria);
-    primaria = mano.splice(idx,1)[0];
 
+    primaria = mano.splice(idx,1)[0];
     primariaCoperta = true;
 
     clearSelezione();
@@ -891,6 +887,48 @@
     await salvaTutto();
   }
 
+  async function rimettiCasualeScartiNelMazzo(){
+    if(scarti.length===0){
+      alert("Non hai scarti!");
+      return;
+    }
+
+    const idx = Math.floor(Math.random()*scarti.length);
+    const c = scarti.splice(idx,1)[0];
+
+    mazzo.push(c);
+    shuffle(mazzo);
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  async function rimettiTuttiScartiNelMazzo(){
+    if(scarti.length===0){
+      alert("Non hai scarti!");
+      return;
+    }
+
+    for(const c of scarti){
+      mazzo.push(c);
+    }
+
+    scarti = [];
+    shuffle(mazzo);
+
+    clearSelezione();
+    aggiornaUI();
+    await salvaTutto();
+  }
+
+  function toggleMostraScarti(){
+    mostraScarti = !mostraScarti;
+    clearSelezione();
+    aggiornaUI();
+  }
+  window.toggleMostraScarti = toggleMostraScarti;
+
   async function resetRoomForAll(){
     if(!roomId || !uid){
       alert("Non sei in una stanza!");
@@ -954,7 +992,6 @@
     }
 
     alreadyJoined = true;
-
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1003,7 +1040,7 @@
     if(myPubSnap.exists()){
       const pdata = myPubSnap.val();
       primaria = pdata.primaria || null;
-      primariaCoperta = (pdata.primariaCoperta !== undefined) ? pdata.primariaCoperta : true;
+      primariaCoperta = pdata.primariaCoperta ?? true;
       supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
     } else {
       primaria = null;
@@ -1063,9 +1100,6 @@
         const box = document.createElement("div");
         box.className = "playerPublic";
 
-        const nm = document.createElement("div");
-        nm.className = "playerName";
-
         const nome = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
 
         let cMazzo = 0;
@@ -1078,6 +1112,8 @@
           cScarti = pdata.contatori.scarti ?? 0;
         }
 
+        const nm = document.createElement("div");
+        nm.className = "playerName";
         nm.innerHTML = `
           ${nome}
           <div class="playerCounters">
@@ -1092,7 +1128,7 @@
 
         if(pdata.primaria){
           if(pdata.primariaCoperta){
-            cArea.appendChild(creaCoperta());
+            cArea.appendChild(creaCoperta(false));
           } else {
             cArea.appendChild(creaCartaDiv(pdata.primaria, "x", 0, true));
           }
@@ -1105,27 +1141,23 @@
           if(pdata.supporti["5"]) cArea.appendChild(creaCartaDiv(pdata.supporti["5"], "x", 0, true));
         }
 
-        // HOST può scoprire/coprirla di qualsiasi giocatore
+        // HOST può scoprire/coprirle primarie degli altri
         if(isHost && pdata.primaria){
-          const btnReveal = document.createElement("button");
-          btnReveal.textContent = "Scopri";
-          btnReveal.className = "greenBtn";
-          btnReveal.onclick = async ()=>{
-            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
-              primariaCoperta: false
-            });
+          const btnShow = document.createElement("button");
+          btnShow.textContent = "Scopri";
+          btnShow.className = "greenBtn";
+          btnShow.onclick = async () => {
+            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), { primariaCoperta:false });
           };
 
           const btnHide = document.createElement("button");
           btnHide.textContent = "Copri";
           btnHide.className = "redBtn";
-          btnHide.onclick = async ()=>{
-            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
-              primariaCoperta: true
-            });
+          btnHide.onclick = async () => {
+            await update(ref(db, `rooms/${roomId}/public/${playerUid}`), { primariaCoperta:true });
           };
 
-          box.appendChild(btnReveal);
+          box.appendChild(btnShow);
           box.appendChild(btnHide);
         }
 
@@ -1160,6 +1192,8 @@
   window.scartaDalMazzo = scartaDalMazzo;
   window.scartaDalMazzoN = scartaDalMazzoN;
   window.rimettiCasualeManoNelMazzo = rimettiCasualeManoNelMazzo;
+  window.rimettiCasualeScartiNelMazzo = rimettiCasualeScartiNelMazzo;
+  window.rimettiTuttiScartiNelMazzo = rimettiTuttiScartiNelMazzo;
   window.resetRoomForAll = resetRoomForAll;
 </script>
 
