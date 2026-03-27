@@ -107,6 +107,26 @@
       transform:rotate(180deg);
     }
 
+    /* SOLO NUMERO (senza seme) */
+    .cornerNum{
+      position:absolute;
+      font-size:16px;
+      font-weight:bold;
+      width:22px;
+      text-align:center;
+    }
+
+    .cornerNum.top-left{
+      top:6px;
+      left:6px;
+    }
+
+    .cornerNum.bottom-right{
+      bottom:6px;
+      right:6px;
+      transform:rotate(180deg);
+    }
+
     .pip{
       position:absolute;
       font-size:18px;
@@ -205,7 +225,6 @@
   <button onclick="pesca(5)">Pesca 5</button>
   <input type="number" id="numPesca" min="1" value="2">
   <button onclick="pescaN()">Pesca N</button>
-  <button onclick="testFigure()">TEST FIGURE</button>
 </div>
 
 <div class="zone">
@@ -332,6 +351,13 @@
     return corner;
   }
 
+  function creaCornerSoloNumero(v, className){
+    var corner = document.createElement("div");
+    corner.className = "cornerNum " + className;
+    corner.textContent = v;
+    return corner;
+  }
+
   function creaPip(sym, x, y){
     var pip = document.createElement("div");
     pip.className = "pip";
@@ -389,7 +415,6 @@
     return box;
   }
 
-  // 2-10 SENZA angoli, A/J/Q/K CON angoli
   function creaCartaDiv(carta,zona,index){
     var v = carta.valore;
     var s = carta.seme;
@@ -409,7 +434,7 @@
       aggiornaUI();
     };
 
-    // FIGURE con angoli
+    // FIGURE con angoli completi
     if(v==="J" || v==="Q" || v==="K"){
       div.appendChild(creaCorner(v, sym, "top-left"));
       div.appendChild(creaCorner(v, sym, "bottom-right"));
@@ -417,7 +442,7 @@
       return div;
     }
 
-    // ASSO con angoli
+    // ASSO con angoli completi
     if(v==="A"){
       div.appendChild(creaCorner(v, sym, "top-left"));
       div.appendChild(creaCorner(v, sym, "bottom-right"));
@@ -432,7 +457,10 @@
       return div;
     }
 
-    // NUMERICHE (2-10) senza angoli
+    // NUMERICHE (2-10): angoli SOLO numero (senza seme)
+    div.appendChild(creaCornerSoloNumero(v, "top-left"));
+    div.appendChild(creaCornerSoloNumero(v, "bottom-right"));
+
     var num = parseInt(v);
     aggiungiPips(div, num, sym);
     return div;
@@ -573,18 +601,6 @@
     if(!c){ alert("Seleziona una carta"); return; }
     mazzo.unshift(removeSelected());
     deseleziona();
-    aggiornaUI();
-  }
-
-  function testFigure(){
-    mano = [
-      { valore:"J", seme:"H" },
-      { valore:"Q", seme:"D" },
-      { valore:"K", seme:"S" },
-      { valore:"10", seme:"H" },
-      { valore:"9", seme:"S" },
-      { valore:"8", seme:"D" }
-    ];
     aggiornaUI();
   }
 
