@@ -385,8 +385,7 @@
   async function aggiungiLog(testo){
     if(!roomId || !uid) return;
 
-    const logRef = ref(db, `rooms/${roomId}/logs`);
-    await push(logRef, {
+    await push(ref(db, `rooms/${roomId}/logs`), {
       testo: testo,
       nickname: nickname || "Sconosciuto",
       uid: uid,
@@ -696,14 +695,20 @@
         btnShow.textContent = "Scopri Primaria";
         btnShow.className = "greenBtn";
         btnShow.onclick = async () => {
-          await hostTogglePrimaria(uid, true);
+          primariaCoperta = false;
+          await salvaPubblico();
+          await aggiungiLog("ha scoperto la propria PRIMARIA");
+          aggiornaUI();
         };
 
         const btnHide = document.createElement("button");
         btnHide.textContent = "Copri Primaria";
         btnHide.className = "redBtn";
         btnHide.onclick = async () => {
-          await hostTogglePrimaria(uid, false);
+          primariaCoperta = true;
+          await salvaPubblico();
+          await aggiungiLog("ha coperto la propria PRIMARIA");
+          aggiornaUI();
         };
 
         document.getElementById("primaria").appendChild(btnShow);
@@ -1031,11 +1036,7 @@
       primariaCoperta: !scopri
     });
 
-    if(playerUid === uid){
-      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la propria PRIMARIA");
-    } else {
-      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la PRIMARIA di un giocatore");
-    }
+    await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
   }
 
   async function joinRoom(){
@@ -1125,7 +1126,6 @@
     aggiornaUI();
 
     await aggiungiLog("è entrato nella stanza");
-    await aggiungiLog("è pronto in stanza");
 
     onValue(ref(db, `rooms/${roomId}/public/${uid}`), (snap)=>{
       if(!snap.exists()) return;
