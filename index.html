@@ -174,6 +174,7 @@
       gap:8px;
       justify-content:center;
       flex-wrap:wrap;
+      align-items:center;
     }
 
     .smallCard{
@@ -240,6 +241,7 @@
 <div class="zone">
   <div class="title">AZIONI HOST</div>
   <button onclick="resetRoomForAll()" class="redBtn">RESET STANZA PER TUTTI</button>
+  <button onclick="pulisciLog()" class="redBtn">PULISCI LOG STANZA</button>
   <div class="info" id="hostInfo">Host: No</div>
 </div>
 
@@ -308,13 +310,27 @@
 </div>
 
 <div class="playersBox">
+  <div class="title">📜 LOG MOSSE</div>
+  <div id="logArea" style="text-align:left; max-height:250px; overflow-y:auto; font-size:14px; color:#ccc;"></div>
+</div>
+
+<div class="playersBox">
+  <div class="title">💬 CHAT STANZA</div>
+
+  <div id="chatArea" style="text-align:left; max-height:250px; overflow-y:auto; font-size:14px; color:#ccc; padding:5px;"></div>
+
+  <input id="chatInput" placeholder="Scrivi un messaggio..." style="width:70%;">
+  <button onclick="inviaMessaggioChat()" class="greenBtn">Invia</button>
+</div>
+
+<div class="playersBox">
   <div class="title">ALTRI GIOCATORI (VEDI SOLO PUBBLICO)</div>
   <div id="playersArea"></div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, onDisconnect, update, push, remove, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
   const firebaseConfig = {
@@ -338,6 +354,7 @@
 
   let isHost = false;
   let alreadyJoined = false;
+  let hostUid = null;
 
   let mazzo = [];
   let mano = [];
@@ -363,6 +380,79 @@
     document.getElementById("nickInfo").innerText = "Nickname: " + nickname;
   }
   window.salvaNickname = salvaNickname;
+
+  function coloreDaUID(uid, isHostPlayer){
+    if(isHostPlayer) return "#FFD700";
+
+    let hash = 0;
+    for(let i=0;i<uid.length;i++){
+      hash = uid.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 80%, 60%)`;
+  }
+
+  async function aggiungiLog(testo){
+    if(!roomId || !uid) return;
+
+    const logRef = ref(db, `rooms/${roomId}/logs`);
+    await push(logRef, {
+      testo: testo,
+      nickname: nickname || "Sconosciuto",
+      uid: uid,
+      time: Date.now()
+    });
+  }
+
+  async function inviaMessaggioChat(){
+    if(!roomId || !uid){
+      alert("Non sei in una stanza!");
+      return;
+    }
+
+    const input = document.getElementById("chatInput");
+    const testo = input.value.trim();
+
+    if(!testo) return;
+
+    input.value = "";
+
+    const chatRef = ref(db, `rooms/${roomId}/chat`);
+    await push(chatRef, {
+      testo: testo,
+      nickname: nickname || "Sconosciuto",
+      uid: uid,
+      time: Date.now()
+    });
+  }
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      const el = document.getElementById("chatInput");
+      if(document.activeElement === el){
+        inviaMessaggioChat();
+      }
+    }
+  });
+
+  async function pulisciLog(){
+    if(!roomId || !uid){
+      alert("Non sei in una stanza!");
+      return;
+    }
+
+    if(!isHost){
+      alert("Solo l'host può pulire il log!");
+      return;
+    }
+
+    const conferma = confirm("Vuoi cancellare TUTTO il log della stanza?");
+    if(!conferma) return;
+
+    await remove(ref(db, `rooms/${roomId}/logs`));
+    await aggiungiLog("ha pulito il log della stanza");
+  }
 
   function creaMazzo(){
     const suits = ["H","D","C","S"];
@@ -668,6 +758,7 @@
         btnShow.onclick = async () => {
           primariaCoperta = false;
           await salvaPubblico();
+          await aggiungiLog("ha scoperto la propria PRIMARIA");
           aggiornaUI();
         };
 
@@ -677,6 +768,7 @@
         btnHide.onclick = async () => {
           primariaCoperta = true;
           await salvaPubblico();
+          await aggiungiLog("ha coperto la propria PRIMARIA");
           aggiornaUI();
         };
 
@@ -718,6 +810,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha resettato il proprio mazzo");
   }
 
   async function mescolaMazzo(){
@@ -725,19 +818,28 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha mescolato il mazzo");
   }
 
   async function pesca(n){
+    let pescate = 0;
+
     for(let i=0;i<n;i++){
       if(mazzo.length===0){
         alert("Mazzo vuoto!");
         break;
       }
       mano.push(mazzo.shift());
+      pescate++;
     }
+
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+
+    if(pescate > 0){
+      await aggiungiLog("ha pescato " + pescate + " carte");
+    }
   }
 
   function pescaN(){
@@ -747,16 +849,24 @@
   }
 
   async function scartaDalMazzo(n){
+    let scartate = 0;
+
     for(let i=0;i<n;i++){
       if(mazzo.length===0){
         alert("Mazzo vuoto!");
         break;
       }
       scarti.push(mazzo.shift());
+      scartate++;
     }
+
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+
+    if(scartate > 0){
+      await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
+    }
   }
 
   function scartaDalMazzoN(){
@@ -780,6 +890,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha messo una carta in PRIMARIA (coperta)");
   }
 
   async function mettiSupporto(n){
@@ -796,11 +907,13 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha messo una carta in SUPPORTO " + n);
   }
 
   async function azioneScarta(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
 
+    const quant = selezioni.length;
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
@@ -811,11 +924,13 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha scartato " + quant + " carte");
   }
 
   async function azioneMano(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
 
+    const quant = selezioni.length;
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
@@ -826,11 +941,13 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso " + quant + " carte in mano");
   }
 
   async function azioneMazzoMescola(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
 
+    const quant = selezioni.length;
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
@@ -843,11 +960,13 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso " + quant + " carte nel mazzo e ha mescolato");
   }
 
   async function azioneCima(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
 
+    const quant = selezioni.length;
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
@@ -858,11 +977,13 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso " + quant + " carte in cima al mazzo");
   }
 
   async function azioneFondo(){
     if(selezioni.length===0){ alert("Seleziona carte"); return; }
 
+    const quant = selezioni.length;
     selezioni.sort((a,b)=>b.index-a.index);
 
     for(const sel of selezioni){
@@ -873,6 +994,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso " + quant + " carte in fondo al mazzo");
   }
 
   async function rimettiCasualeManoNelMazzo(){
@@ -890,6 +1012,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso 1 carta casuale dalla mano nel mazzo e ha mescolato");
   }
 
   async function rimettiCasualeScartiNelMazzo(){
@@ -907,6 +1030,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso 1 carta casuale dagli scarti nel mazzo e ha mescolato");
   }
 
   async function rimettiTuttiScartiNelMazzo(){
@@ -925,6 +1049,7 @@
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+    await aggiungiLog("ha rimesso tutti gli scarti nel mazzo e ha mescolato");
   }
 
   async function resetRoomForAll(){
@@ -964,6 +1089,7 @@
       });
     }
 
+    await aggiungiLog("ha resettato la stanza per tutti");
     alert("Stanza resettata per tutti!");
   }
 
@@ -976,6 +1102,8 @@
     await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
       primariaCoperta: !scopri
     });
+
+    await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
   }
 
   async function joinRoom(){
@@ -1016,6 +1144,7 @@
 
     const meta = (await get(roomMetaRef)).val();
     isHost = (meta.hostUid === uid);
+    hostUid = meta.hostUid;
 
     document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
 
@@ -1063,7 +1192,9 @@
     clearSelezione();
     aggiornaUI();
 
-    // ASCOLTA IL TUO PUBBLICO IN TEMPO REALE (se host cambia primariaCoperta)
+    await aggiungiLog("è entrato nella stanza");
+
+    // LISTENER: se host cambia la tua primariaCoperta tu lo vedi subito
     onValue(ref(db, `rooms/${roomId}/public/${uid}`), (snap)=>{
       if(!snap.exists()) return;
 
@@ -1076,7 +1207,7 @@
       aggiornaUI();
     });
 
-    // PRESENZA ONLINE (NESSUNA PULIZIA)
+    // PRESENZA ONLINE (con corona host)
     onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
       const list = document.getElementById("playersList");
       list.innerHTML = "";
@@ -1094,11 +1225,13 @@
 
         if(p.online) onlineCount++;
 
+        const crown = (pUid === hostUid) ? " 👑" : "";
+
         const div = document.createElement("div");
         div.className = "info";
 
         div.innerHTML =
-          "<b>" + p.nickname + "</b> (" + pUid.substring(0,6) + ") - " +
+          "<b>" + p.nickname + crown + "</b> (" + pUid.substring(0,6) + ") - " +
           (p.online ? "<span class='online'>ONLINE</span>" : "<span class='offline'>OFFLINE</span>");
 
         list.appendChild(div);
@@ -1106,6 +1239,82 @@
 
       document.getElementById("playerCountInfo").innerText =
         "Giocatori online: " + onlineCount + " / 9";
+    });
+
+    // LOG MOSSE
+    onValue(ref(db, `rooms/${roomId}/logs`), (snap)=>{
+      const logArea = document.getElementById("logArea");
+      logArea.innerHTML = "";
+
+      if(!snap.exists()){
+        logArea.innerHTML = "<i>Nessuna mossa ancora...</i>";
+        return;
+      }
+
+      const logs = snap.val();
+      const keys = Object.keys(logs);
+
+      keys.sort((a,b)=>logs[a].time - logs[b].time);
+
+      for(const k of keys){
+        const l = logs[k];
+
+        const d = new Date(l.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (l.uid === hostUid);
+        const col = coloreDaUID(l.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          ⏱ <b>${ora}</b> - 
+          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
+          ${l.testo}
+        `;
+
+        logArea.appendChild(div);
+      }
+
+      logArea.scrollTop = logArea.scrollHeight;
+    });
+
+    // CHAT STANZA (ultimi 200 messaggi)
+    onValue(query(ref(db, `rooms/${roomId}/chat`), limitToLast(200)), (snap)=>{
+      const chatArea = document.getElementById("chatArea");
+      chatArea.innerHTML = "";
+
+      if(!snap.exists()){
+        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
+        return;
+      }
+
+      const chat = snap.val();
+      const keys = Object.keys(chat);
+
+      keys.sort((a,b)=>chat[a].time - chat[b].time);
+
+      for(const k of keys){
+        const m = chat[k];
+
+        const d = new Date(m.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (m.uid === hostUid);
+        const col = coloreDaUID(m.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <b style="color:${col};">${m.nickname}${crown}</b>
+          <span style="color:#888;">(${ora})</span>:
+          <span style="color:white;">${m.testo}</span>
+        `;
+
+        chatArea.appendChild(div);
+      }
+
+      chatArea.scrollTop = chatArea.scrollHeight;
     });
 
     // ALTRI GIOCATORI (PUBBLICO)
@@ -1218,6 +1427,8 @@
   window.resetRoomForAll = resetRoomForAll;
   window.mostraScarti = mostraScarti;
   window.nascondiScarti = nascondiScarti;
+  window.inviaMessaggioChat = inviaMessaggioChat;
+  window.pulisciLog = pulisciLog;
 </script>
 
 </body>
