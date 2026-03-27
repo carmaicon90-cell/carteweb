@@ -34,13 +34,8 @@
       font-weight:bold;
     }
 
-    button.redBtn{
-      background:#ff3333;
-    }
-
-    button.greenBtn{
-      background:#00aa66;
-    }
+    button.redBtn{ background:#ff3333; }
+    button.greenBtn{ background:#00aa66; }
 
     input{
       padding:8px;
@@ -104,16 +99,8 @@
       line-height:14px;
     }
 
-    .top-left{
-      top:6px;
-      left:6px;
-    }
-
-    .bottom-right{
-      bottom:6px;
-      right:6px;
-      transform:rotate(180deg);
-    }
+    .top-left{ top:6px; left:6px; }
+    .bottom-right{ bottom:6px; right:6px; transform:rotate(180deg); }
 
     .pip{
       position:absolute;
@@ -142,20 +129,9 @@
       font-weight:bold;
     }
 
-    .faceBox .icon{
-      font-size:28px;
-      margin-bottom:6px;
-    }
-
-    .faceBox .letter{
-      font-size:34px;
-      line-height:34px;
-    }
-
-    .faceBox .suit{
-      font-size:26px;
-      margin-top:6px;
-    }
+    .faceBox .icon{ font-size:28px; margin-bottom:6px; }
+    .faceBox .letter{ font-size:34px; line-height:34px; }
+    .faceBox .suit{ font-size:26px; margin-top:6px; }
 
     .aceBig{
       position:absolute;
@@ -205,14 +181,35 @@
       transform-origin:center;
     }
 
-    .online{
-      color:#00ff66;
-      font-weight:bold;
+    .online{ color:#00ff66; font-weight:bold; }
+    .offline{ color:#ff5555; font-weight:bold; }
+
+    .cardBack{
+      width:85px;
+      height:125px;
+      border-radius:14px;
+      background:repeating-linear-gradient(
+        45deg,
+        #002a66,
+        #002a66 10px,
+        #0047ab 10px,
+        #0047ab 20px
+      );
+      border:2px solid #ddd;
+      cursor:pointer;
+      position:relative;
+      box-shadow:0 4px 10px rgba(0,0,0,0.7);
+      overflow:hidden;
     }
 
-    .offline{
-      color:#ff5555;
-      font-weight:bold;
+    .cardBack::after{
+      content:"★";
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:55px;
+      color:rgba(255,255,255,0.6);
     }
   </style>
 </head>
@@ -273,9 +270,11 @@
 <div class="info" id="selezioneInfo"></div>
 
 <div class="zone">
-  <div class="title">PRIMARIA (PUBBLICA)</div>
+  <div class="title">PRIMARIA (PUBBLICA MA COPERTA)</div>
   <div class="cards" id="primaria"></div>
   <button onclick="mettiPrimaria()">Metti Primaria (da mano)</button>
+  <button onclick="scopriPrimaria()" class="greenBtn">Scopri Primaria</button>
+  <button onclick="copriPrimaria()" class="redBtn">Copri Primaria</button>
 </div>
 
 <div class="zone">
@@ -309,7 +308,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
   const firebaseConfig = {
@@ -338,6 +337,7 @@
   let mano = [];
   let scarti = [];
   let primaria = null;
+  let primariaCoperta = true; // <-- NUOVO
   let supporti = {2:null,3:null,4:null,5:null};
 
   let selezioni = [];
@@ -423,6 +423,7 @@
     if(zona==="primaria"){
       const c = primaria;
       primaria = null;
+      primariaCoperta = true;
       return c;
     }
 
@@ -559,6 +560,13 @@
     return div;
   }
 
+  function creaCoperta(small=false){
+    const div = document.createElement("div");
+    div.className = "cardBack";
+    if(small) div.classList.add("smallCard");
+    return div;
+  }
+
   async function salvaPrivato(){
     if(!roomId || !uid) return;
     await set(ref(db, `rooms/${roomId}/private/${uid}`), {
@@ -569,8 +577,9 @@
   async function salvaPubblico(){
     if(!roomId || !uid) return;
 
-    await set(ref(db, `rooms/${roomId}/public/${uid}`), {
+    await update(ref(db, `rooms/${roomId}/public/${uid}`), {
       primaria,
+      primariaCoperta, // <-- NUOVO
       supporti,
       nickname,
       contatori: {
@@ -624,7 +633,11 @@
     }
 
     if(primaria){
-      document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+      if(primariaCoperta){
+        document.getElementById("primaria").appendChild(creaCoperta());
+      }else{
+        document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
+      }
     }
 
     if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
@@ -645,6 +658,7 @@
     mano = [];
     scarti = [];
     primaria = null;
+    primariaCoperta = true;
     supporti = {2:null,3:null,4:null,5:null};
     clearSelezione();
     aggiornaUI();
@@ -707,9 +721,31 @@
     if(primaria) mano.push(primaria);
     primaria = mano.splice(idx,1)[0];
 
+    primariaCoperta = true; // <-- COPERTA AUTOMATICA
+
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
+  }
+
+  async function scopriPrimaria(){
+    if(!primaria){
+      alert("Non hai una primaria!");
+      return;
+    }
+    primariaCoperta = false;
+    aggiornaUI();
+    await salvaPubblico();
+  }
+
+  async function copriPrimaria(){
+    if(!primaria){
+      alert("Non hai una primaria!");
+      return;
+    }
+    primariaCoperta = true;
+    aggiornaUI();
+    await salvaPubblico();
   }
 
   async function mettiSupporto(n){
@@ -851,15 +887,11 @@
         scarti: []
       });
 
-      await set(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+      await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
         primaria: null,
+        primariaCoperta: true,
         supporti: {2:null,3:null,4:null,5:null},
-        nickname: pubSnap.val()[playerUid].nickname || "Sconosciuto",
-        contatori: {
-          mazzo: 52,
-          mano: 0,
-          scarti: 0
-        }
+        contatori: { mazzo: 52, mano: 0, scarti: 0 }
       });
     }
 
@@ -938,18 +970,19 @@
     if(myPubSnap.exists()){
       const pdata = myPubSnap.val();
       primaria = pdata.primaria || null;
+      primariaCoperta = pdata.primariaCoperta ?? true;
       supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
     } else {
       primaria = null;
+      primariaCoperta = true;
       supporti = {2:null,3:null,4:null,5:null};
-      await salvaPubblico();
     }
+
+    await salvaPubblico();
 
     clearSelezione();
     aggiornaUI();
-    await salvaPubblico();
 
-    // PRESENZA ONLINE (NO PULIZIA)
     onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
       const list = document.getElementById("playersList");
       list.innerHTML = "";
@@ -981,7 +1014,6 @@
         "Giocatori online: " + onlineCount + " / 9";
     });
 
-    // ALTRI GIOCATORI (PUBBLICO)
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
       const playersArea = document.getElementById("playersArea");
       playersArea.innerHTML = "";
@@ -1003,14 +1035,14 @@
 
         const nome = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
 
-        let cMazzo = "?";
-        let cMano = "?";
-        let cScarti = "?";
+        let cMazzo = 0;
+        let cMano = 0;
+        let cScarti = 0;
 
         if(pdata.contatori){
-          cMazzo = pdata.contatori.mazzo;
-          cMano = pdata.contatori.mano;
-          cScarti = pdata.contatori.scarti;
+          cMazzo = pdata.contatori.mazzo ?? 0;
+          cMano = pdata.contatori.mano ?? 0;
+          cScarti = pdata.contatori.scarti ?? 0;
         }
 
         nm.innerHTML = `
@@ -1026,7 +1058,11 @@
         cArea.className = "smallCards";
 
         if(pdata.primaria){
-          cArea.appendChild(creaCartaDiv(pdata.primaria, "x", 0, true));
+          if(pdata.primariaCoperta){
+            cArea.appendChild(creaCoperta(true));
+          }else{
+            cArea.appendChild(creaCartaDiv(pdata.primaria, "x", 0, true));
+          }
         }
 
         if(pdata.supporti){
@@ -1058,6 +1094,8 @@
   window.pesca = pesca;
   window.pescaN = pescaN;
   window.mettiPrimaria = mettiPrimaria;
+  window.scopriPrimaria = scopriPrimaria;
+  window.copriPrimaria = copriPrimaria;
   window.mettiSupporto = mettiSupporto;
   window.azioneScarta = azioneScarta;
   window.azioneMano = azioneMano;
@@ -1068,7 +1106,6 @@
   window.scartaDalMazzoN = scartaDalMazzoN;
   window.rimettiCasualeManoNelMazzo = rimettiCasualeManoNelMazzo;
   window.resetRoomForAll = resetRoomForAll;
-
 </script>
 
 </body>
