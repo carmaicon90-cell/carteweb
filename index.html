@@ -187,6 +187,12 @@
       margin-bottom:6px;
     }
 
+    .playerCounters{
+      font-size:13px;
+      color:#ccc;
+      margin-top:4px;
+    }
+
     .smallCards{
       display:flex;
       gap:8px;
@@ -303,10 +309,9 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // 🔥 FIREBASE CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyD0REuxzEW1j9jFBJTiTaT1g7ftAHkZmhg",
     authDomain: "carteweb-80275.firebaseapp.com",
@@ -327,6 +332,7 @@
   let nickname = localStorage.getItem("nickname") || "";
 
   let isHost = false;
+  let alreadyJoined = false;
 
   let mazzo = [];
   let mano = [];
@@ -348,9 +354,7 @@
     nickname = n;
     localStorage.setItem("nickname", nickname);
     document.getElementById("nickInfo").innerText = "Nickname: " + nickname;
-    if(roomId && uid) salvaPresenza();
   }
-
   window.salvaNickname = salvaNickname;
 
   function creaMazzo(){
@@ -564,8 +568,16 @@
 
   async function salvaPubblico(){
     if(!roomId || !uid) return;
+
     await set(ref(db, `rooms/${roomId}/public/${uid}`), {
-      primaria, supporti, nickname
+      primaria,
+      supporti,
+      nickname,
+      contatori: {
+        mazzo: mazzo.length,
+        mano: mano.length,
+        scarti: scarti.length
+      }
     });
   }
 
@@ -582,7 +594,6 @@
 
     onValue(connectedRef, (snap) => {
       if(snap.val() === true){
-
         set(presenceRef, {
           nickname: nickname || "Sconosciuto",
           online: true,
@@ -642,8 +653,9 @@
 
   async function mescolaMazzo(){
     shuffle(mazzo);
-    await salvaPrivato();
+    clearSelezione();
     aggiornaUI();
+    await salvaTutto();
   }
 
   async function pesca(n){
@@ -656,7 +668,7 @@
     }
     clearSelezione();
     aggiornaUI();
-    await salvaPrivato();
+    await salvaTutto();
   }
 
   function pescaN(){
@@ -675,7 +687,7 @@
     }
     clearSelezione();
     aggiornaUI();
-    await salvaPrivato();
+    await salvaTutto();
   }
 
   function scartaDalMazzoN(){
@@ -807,7 +819,7 @@
 
     clearSelezione();
     aggiornaUI();
-    await salvaPrivato();
+    await salvaTutto();
   }
 
   async function resetRoomForAll(){
@@ -842,7 +854,12 @@
       await set(ref(db, `rooms/${roomId}/public/${playerUid}`), {
         primaria: null,
         supporti: {2:null,3:null,4:null,5:null},
-        nickname: pubSnap.val()[playerUid].nickname || "Sconosciuto"
+        nickname: pubSnap.val()[playerUid].nickname || "Sconosciuto",
+        contatori: {
+          mazzo: 52,
+          mano: 0,
+          scarti: 0
+        }
       });
     }
 
@@ -852,6 +869,11 @@
   async function joinRoom(){
     if(!uid){
       alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
+      return;
+    }
+
+    if(alreadyJoined){
+      alert("Sei già dentro la stanza!");
       return;
     }
 
@@ -865,6 +887,8 @@
       alert("Inserisci nome stanza!");
       return;
     }
+
+    alreadyJoined = true;
 
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
@@ -923,8 +947,10 @@
 
     clearSelezione();
     aggiornaUI();
+    await salvaPubblico();
 
-    onValue(ref(db, `rooms/${roomId}/presence`), async (snap)=>{
+    // PRESENZA ONLINE (NO PULIZIA)
+    onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
       const list = document.getElementById("playersList");
       list.innerHTML = "";
 
@@ -938,14 +964,6 @@
 
       for(const pUid in all){
         const p = all[pUid];
-
-        if(p.online === false && p.lastSeen){
-          const diff = Date.now() - p.lastSeen;
-          if(diff > 10 * 60 * 1000){
-            remove(ref(db, `rooms/${roomId}/presence/${pUid}`));
-            continue;
-          }
-        }
 
         if(p.online) onlineCount++;
 
@@ -963,6 +981,7 @@
         "Giocatori online: " + onlineCount + " / 9";
     });
 
+    // ALTRI GIOCATORI (PUBBLICO)
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
       const playersArea = document.getElementById("playersArea");
       playersArea.innerHTML = "";
@@ -981,7 +1000,25 @@
 
         const nm = document.createElement("div");
         nm.className = "playerName";
-        nm.textContent = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
+
+        const nome = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
+
+        let cMazzo = "?";
+        let cMano = "?";
+        let cScarti = "?";
+
+        if(pdata.contatori){
+          cMazzo = pdata.contatori.mazzo;
+          cMano = pdata.contatori.mano;
+          cScarti = pdata.contatori.scarti;
+        }
+
+        nm.innerHTML = `
+          ${nome}
+          <div class="playerCounters">
+            Mazzo: <b>${cMazzo}</b> | Mano: <b>${cMano}</b> | Scarti: <b>${cScarti}</b>
+          </div>
+        `;
 
         box.appendChild(nm);
 
