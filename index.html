@@ -223,17 +223,29 @@
   <button onclick="mescolaMazzo()">Mescola</button>
   <button onclick="pesca(1)">Pesca 1</button>
   <button onclick="pesca(5)">Pesca 5</button>
+
   <input type="number" id="numPesca" min="1" value="2">
   <button onclick="pescaN()">Pesca N</button>
+
+  <hr style="margin:12px;border:1px solid #333;">
+
+  <button onclick="scartaDalMazzo(1)">Scarta 1 (coperto)</button>
+  <input type="number" id="numScarta" min="1" value="3">
+  <button onclick="scartaN()">Scarta N (coperto)</button>
+
+  <hr style="margin:12px;border:1px solid #333;">
+
+  <button onclick="toggleScarti()">Mostra/Nascondi Scarti</button>
 </div>
 
 <div class="zone">
   <div class="title">AZIONI SELEZIONE</div>
-  <button onclick="azioneScarta()">Scarta</button>
+  <button onclick="azioneScarta()">Scarta (selezione)</button>
   <button onclick="azioneMano()">Rimetti in Mano</button>
   <button onclick="azioneMazzoMescola()">Rimetti nel Mazzo (mescola)</button>
   <button onclick="azioneCima()">Rimetti in Cima</button>
   <button onclick="azioneFondo()">Rimetti in Fondo</button>
+  <button onclick="prendiDaScarti()">Prendi dagli Scarti → Mano</button>
 </div>
 
 <div class="info" id="contatori"></div>
@@ -260,7 +272,7 @@
 </div>
 
 <div class="zone">
-  <div class="title">SCARTI (coperti)</div>
+  <div class="title">SCARTI</div>
   <div class="cards" id="scarti"></div>
 </div>
 
@@ -274,6 +286,8 @@
 
   var selZona = null;
   var selIndex = null;
+
+  var scartiVisibili = false;
 
   function creaMazzo(){
     var suits = ["H","D","C","S"];
@@ -434,7 +448,6 @@
       aggiornaUI();
     };
 
-    // FIGURE con angoli completi
     if(v==="J" || v==="Q" || v==="K"){
       div.appendChild(creaCorner(v, sym, "top-left"));
       div.appendChild(creaCorner(v, sym, "bottom-right"));
@@ -442,7 +455,6 @@
       return div;
     }
 
-    // ASSO con angoli completi
     if(v==="A"){
       div.appendChild(creaCorner(v, sym, "top-left"));
       div.appendChild(creaCorner(v, sym, "bottom-right"));
@@ -457,7 +469,6 @@
       return div;
     }
 
-    // NUMERICHE (2-10): angoli SOLO numero (senza seme)
     div.appendChild(creaCornerSoloNumero(v, "top-left"));
     div.appendChild(creaCornerSoloNumero(v, "bottom-right"));
 
@@ -483,6 +494,28 @@
     return div;
   }
 
+  function toggleScarti(){
+    scartiVisibili = !scartiVisibili;
+    deseleziona();
+    aggiornaUI();
+  }
+
+  function prendiDaScarti(){
+    if(!scartiVisibili){
+      alert("Devi prima mostrare gli scarti!");
+      return;
+    }
+
+    if(selZona !== "scarti"){
+      alert("Seleziona una carta dagli scarti!");
+      return;
+    }
+
+    mano.push(scarti.splice(selIndex,1)[0]);
+    deseleziona();
+    aggiornaUI();
+  }
+
   function aggiornaUI(){
     document.getElementById("mano").innerHTML = "";
     document.getElementById("scarti").innerHTML = "";
@@ -494,7 +527,11 @@
     }
 
     for(var j=0;j<scarti.length;j++){
-      document.getElementById("scarti").appendChild(creaCoperta("scarti",j));
+      if(scartiVisibili){
+        document.getElementById("scarti").appendChild(creaCartaDiv(scarti[j],"scarti",j));
+      } else {
+        document.getElementById("scarti").appendChild(creaCoperta("scarti",j));
+      }
     }
 
     if(primaria){
@@ -545,6 +582,23 @@
     var n = parseInt(document.getElementById("numPesca").value);
     if(isNaN(n) || n<1) return;
     pesca(n);
+  }
+
+  function scartaDalMazzo(n){
+    for(var i=0;i<n;i++){
+      if(mazzo.length===0){
+        alert("Mazzo vuoto!");
+        break;
+      }
+      scarti.push(mazzo.shift());
+    }
+    aggiornaUI();
+  }
+
+  function scartaN(){
+    var n = parseInt(document.getElementById("numScarta").value);
+    if(isNaN(n) || n < 1) return;
+    scartaDalMazzo(n);
   }
 
   function mettiPrimaria(){
