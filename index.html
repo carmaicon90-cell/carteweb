@@ -3,68 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Carte Multiplayer</title>
+  <title>Carte Multiplayer - Anime Board</title>
 
   <style>
     body{
       margin:0;
-      font-family:Arial, sans-serif;
-      background:#0e0e0e;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at top, #1a1a3a, #050510);
       color:white;
-      text-align:center;
+      overflow-x:hidden;
     }
 
-    h2{margin:10px 0;}
+    h2{
+      margin:10px 0;
+      text-align:center;
+      font-size:22px;
+      color:#ffccff;
+      text-shadow:0 0 10px rgba(255,0,255,0.35);
+      letter-spacing:1px;
+    }
 
-    .zone{
-      background:#1b1b1b;
+    /* layout board */
+    .board{
+      display:grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      gap:12px;
       padding:12px;
-      border-radius:14px;
-      margin:10px;
+      height: calc(100vh - 70px);
+      box-sizing:border-box;
     }
 
-    button{
-      margin:4px;
-      padding:10px;
-      border:none;
-      border-radius:10px;
-      cursor:pointer;
-      background:#2d89ff;
-      color:white;
-      font-weight:bold;
-    }
-
-    button.redBtn{ background:#ff3333; }
-    button.greenBtn{ background:#00aa66; }
-
-    input{
-      padding:8px;
-      border-radius:10px;
-      border:none;
-      width:160px;
-      text-align:center;
-      margin:5px;
-      font-weight:bold;
-    }
-
-    .cards{
+    .leftPanel, .rightPanel{
       display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:10px;
-      margin-top:10px;
+      flex-direction:column;
+      gap:12px;
+      overflow:hidden;
+    }
+
+    .centerPanel{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      overflow:hidden;
+    }
+
+    .panel{
+      background: rgba(0,0,0,0.35);
+      border-radius:18px;
+      padding:12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 0 18px rgba(0,255,255,0.08);
+      backdrop-filter: blur(10px);
     }
 
     .title{
-      font-size:16px;
+      font-size:14px;
       font-weight:bold;
-      color:#ffcc00;
+      color:#66ffff;
+      text-shadow:0 0 8px rgba(0,255,255,0.35);
+      margin-bottom:8px;
+      letter-spacing:1px;
+      text-transform:uppercase;
     }
 
     .info{
-      font-size:14px;
+      font-size:13px;
       color:#ccc;
-      margin:5px;
+      margin:6px 0;
       word-break:break-word;
     }
 
@@ -73,21 +78,86 @@
       color:#00ffcc;
     }
 
-    .card{
-      width:85px;
-      height:125px;
+    input{
+      padding:10px;
       border-radius:14px;
-      background:linear-gradient(#ffffff,#f1f1f1);
+      border:none;
+      width:160px;
+      text-align:center;
+      margin:5px;
+      font-weight:bold;
+      background: rgba(255,255,255,0.12);
+      color:white;
+      outline:none;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+    }
+
+    input::placeholder{
+      color: rgba(255,255,255,0.6);
+    }
+
+    button{
+      margin:4px;
+      padding:10px 12px;
+      border:none;
+      border-radius:14px;
+      cursor:pointer;
+      background: linear-gradient(180deg,#ff66ff,#a100ff);
+      color:white;
+      font-weight:bold;
+      box-shadow: 0 0 10px rgba(255,0,255,0.25);
+      transition: 0.15s;
+    }
+
+    button:hover{
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+
+    button:active{
+      transform: scale(0.97);
+    }
+
+    button.redBtn{
+      background: linear-gradient(180deg,#ff4444,#aa0000);
+      box-shadow: 0 0 10px rgba(255,0,0,0.25);
+    }
+
+    button.greenBtn{
+      background: linear-gradient(180deg,#00ff99,#00aa66);
+      box-shadow: 0 0 10px rgba(0,255,150,0.25);
+    }
+
+    /* card zones */
+    .cards{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:12px;
+      margin-top:8px;
+    }
+
+    .card{
+      width:90px;
+      height:132px;
+      border-radius:16px;
+      background: linear-gradient(180deg,#ffffff,#f0f0ff);
       cursor:pointer;
       position:relative;
-      border:2px solid #ddd;
-      box-shadow:0 4px 10px rgba(0,0,0,0.7);
+      border:2px solid rgba(255,255,255,0.5);
+      box-shadow:0 6px 14px rgba(0,0,0,0.75);
       user-select:none;
       overflow:hidden;
+      transition:0.15s;
+    }
+
+    .card:hover{
+      transform: translateY(-5px);
     }
 
     .card.selected{
-      border:3px solid gold;
+      border:3px solid #ffff66;
+      box-shadow:0 0 18px rgba(255,255,100,0.8);
     }
 
     .corner{
@@ -95,21 +165,22 @@
       font-size:14px;
       font-weight:bold;
       text-align:center;
-      width:26px;
+      width:28px;
       line-height:14px;
+      text-shadow:0 0 3px rgba(0,0,0,0.4);
     }
 
-    .top-left{ top:6px; left:6px; }
-    .bottom-right{ bottom:6px; right:6px; transform:rotate(180deg); }
+    .top-left{ top:7px; left:7px; }
+    .bottom-right{ bottom:7px; right:7px; transform:rotate(180deg); }
 
     .pip{
       position:absolute;
-      font-size:20px;
+      font-size:21px;
       opacity:0.95;
       transform:translate(-50%,-50%);
     }
 
-    .red{ color:#d00000; }
+    .red{ color:#c00000; }
     .black{ color:#000; }
 
     .faceBox{
@@ -117,19 +188,20 @@
       top:50%;
       left:50%;
       transform:translate(-50%,-50%);
-      width:64px;
-      height:84px;
-      border-radius:12px;
+      width:70px;
+      height:92px;
+      border-radius:14px;
       border:2px solid rgba(0,0,0,0.25);
-      background:linear-gradient(180deg,#ffffff,#eaeaea);
+      background:linear-gradient(180deg,#ffffff,#f0eaff);
       display:flex;
       flex-direction:column;
       justify-content:center;
       align-items:center;
       font-weight:bold;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
     }
 
-    .faceBox .icon{ font-size:28px; margin-bottom:6px; }
+    .faceBox .icon{ font-size:30px; margin-bottom:6px; }
     .faceBox .letter{ font-size:34px; line-height:34px; }
     .faceBox .suit{ font-size:26px; margin-top:6px; }
 
@@ -138,214 +210,282 @@
       top:50%;
       left:50%;
       transform:translate(-50%,-50%);
-      font-size:70px;
+      font-size:74px;
       opacity:0.95;
     }
 
-    .playersBox{
-      background:#111;
-      margin:10px;
-      padding:10px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.15);
+    /* anime back card */
+    .cardBack{
+      width:90px;
+      height:132px;
+      border-radius:16px;
+      background: repeating-linear-gradient(
+        45deg,
+        #ff66ff,
+        #ff66ff 10px,
+        #6600ff 10px,
+        #6600ff 20px
+      );
+      border:2px solid rgba(255,255,255,0.5);
+      cursor:pointer;
+      position:relative;
+      box-shadow:0 6px 14px rgba(0,0,0,0.75);
+      overflow:hidden;
+      transition:0.15s;
     }
 
+    .cardBack:hover{
+      transform: translateY(-5px);
+    }
+
+    .cardBack::after{
+      content:"✦";
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:60px;
+      color:rgba(255,255,255,0.75);
+      text-shadow:0 0 14px rgba(255,255,255,0.35);
+    }
+
+    .cardBack.selected{
+      border:3px solid #ffff66;
+      box-shadow:0 0 18px rgba(255,255,100,0.8);
+    }
+
+    /* players */
     .playerPublic{
-      background:#1c1c1c;
-      border-radius:14px;
+      background: rgba(255,255,255,0.08);
+      border-radius:16px;
       padding:10px;
       margin:10px 0;
+      border:1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 0 10px rgba(0,255,255,0.12);
     }
 
     .playerName{
       font-weight:bold;
       color:#00ffcc;
       margin-bottom:6px;
+      text-shadow:0 0 8px rgba(0,255,200,0.3);
+      font-size:14px;
     }
 
     .playerCounters{
-      font-size:13px;
+      font-size:12px;
       color:#ccc;
       margin-top:4px;
     }
 
     .smallCards{
       display:flex;
-      gap:8px;
+      gap:10px;
       justify-content:center;
       flex-wrap:wrap;
+      margin-top:8px;
     }
 
     .smallCard{
-      transform:scale(0.85);
+      transform:scale(0.82);
       transform-origin:center;
     }
 
-    .online{ color:#00ff66; font-weight:bold; }
-    .offline{ color:#ff5555; font-weight:bold; }
+    .online{
+      color:#44ff88;
+      font-weight:bold;
+    }
 
-    .cardBack{
-      width:85px;
-      height:125px;
+    .offline{
+      color:#ff6666;
+      font-weight:bold;
+    }
+
+    /* chat/log scroll */
+    #logArea, #chatArea{
+      background: rgba(0,0,0,0.35);
       border-radius:14px;
-      background:repeating-linear-gradient(
-        45deg,
-        #002a66,
-        #002a66 10px,
-        #0047ab 10px,
-        #0047ab 20px
-      );
-      border:2px solid #ddd;
-      cursor:pointer;
-      position:relative;
-      box-shadow:0 4px 10px rgba(0,0,0,0.7);
-      overflow:hidden;
-    }
-
-    .cardBack::after{
-      content:"★";
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      font-size:55px;
-      color:rgba(255,255,255,0.6);
-    }
-
-    .cardBack.selected{
-      border:3px solid gold;
-    }
-
-    #chatArea{
-      text-align:left;
-      max-height:250px;
+      padding:10px;
+      border:1px solid rgba(255,255,255,0.12);
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+      max-height: 250px;
       overflow-y:auto;
-      font-size:14px;
-      color:#ccc;
-      padding:6px;
-      border-radius:12px;
-      background:#0d0d0d;
-      border:1px solid rgba(255,255,255,0.1);
+      font-size:13px;
+      text-align:left;
     }
 
-    #chatInput{
-      width:75%;
-      max-width:320px;
+    /* fixed hand */
+    .handPanel{
+      position: fixed;
+      left:0;
+      bottom:0;
+      width:100%;
+      background: rgba(0,0,0,0.75);
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding:10px;
+      box-sizing:border-box;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 -8px 18px rgba(0,0,0,0.75);
+      z-index:999;
+    }
+
+    .handPanel .cards{
+      justify-content:center;
+      gap:10px;
+    }
+
+    .handPanel .title{
+      margin-bottom:6px;
+    }
+
+    /* mobile */
+    @media(max-width: 1000px){
+      .board{
+        grid-template-columns: 1fr;
+        height:auto;
+        padding-bottom: 220px;
+      }
+
+      .handPanel{
+        position:relative;
+        margin-top:20px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<h2>🃏 Carte Multiplayer (Firebase)</h2>
+<h2>🃏 Carte Multiplayer - Anime Board</h2>
 
-<div class="zone">
-  <div class="title">PROFILO</div>
-  <input id="nickname" placeholder="Nickname">
-  <button onclick="salvaNickname()" class="greenBtn">Salva Nickname</button>
-  <div class="info" id="nickInfo">Nickname non impostato</div>
+<div class="board">
+
+  <!-- LEFT -->
+  <div class="leftPanel">
+    <div class="panel">
+      <div class="title">Profilo</div>
+      <input id="nickname" placeholder="Nickname">
+      <button onclick="salvaNickname()" class="greenBtn">Salva Nickname</button>
+      <div class="info" id="nickInfo">Nickname non impostato</div>
+    </div>
+
+    <div class="panel">
+      <div class="title">Stanza</div>
+      <input id="roomName" placeholder="Nome stanza">
+      <button onclick="joinRoom()">Entra / Crea stanza</button>
+      <div class="info" id="roomInfo">Non connesso</div>
+      <div class="info" id="playerCountInfo">Giocatori online: 0 / 9</div>
+      <div class="info" id="hostInfo">Host: No</div>
+    </div>
+
+    <div class="panel">
+      <div class="title">Giocatori Online</div>
+      <div id="playersList"></div>
+    </div>
+
+    <div class="panel">
+      <div class="title">📜 Log Mosse</div>
+      <div id="logArea"></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="centerPanel">
+
+    <div class="panel">
+      <div class="title">Azioni Host</div>
+      <button onclick="resetRoomForAll()" class="redBtn">RESET STANZA PER TUTTI</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">Azioni Mazzo</div>
+      <button onclick="resetGioco()">Reset Mazzo (solo tuo)</button>
+      <button onclick="mescolaMazzo()">Mescola</button>
+      <button onclick="pesca(1)">Pesca 1</button>
+      <button onclick="pesca(5)">Pesca 5</button>
+      <input type="number" id="numPesca" min="1" value="2">
+      <button onclick="pescaN()">Pesca N</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">Scarta dal Mazzo (senza vedere)</div>
+      <button onclick="scartaDalMazzo(1)">Scarta 1</button>
+      <input type="number" id="numScartaMazzo" min="1" value="2">
+      <button onclick="scartaDalMazzoN()">Scarta N</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">Azioni Selezione Multi</div>
+      <button onclick="azioneScarta()">Scarta</button>
+      <button onclick="azioneMano()">Rimetti in Mano</button>
+      <button onclick="azioneMazzoMescola()">Rimetti nel Mazzo + Mescola</button>
+      <button onclick="azioneCima()">Rimetti in Cima</button>
+      <button onclick="azioneFondo()">Rimetti in Fondo</button>
+      <button onclick="rimettiCasualeManoNelMazzo()">Casuale mano → mazzo + mescola</button>
+      <button onclick="rimettiCasualeScartiNelMazzo()">Casuale scarti → mazzo + mescola</button>
+      <button onclick="rimettiTuttiScartiNelMazzo()">Tutti scarti → mazzo + mescola</button>
+    </div>
+
+    <div class="panel">
+      <div class="info" id="contatori"></div>
+      <div class="info" id="selezioneInfo"></div>
+    </div>
+
+    <div class="panel">
+      <div class="title">🎯 Primaria (Pubblica)</div>
+      <div class="cards" id="primaria"></div>
+      <button onclick="mettiPrimaria()">Metti Primaria (da mano)</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">🛡️ Supporti (Pubblici)</div>
+      <div class="cards" id="supporti"></div>
+      <button onclick="mettiSupporto(2)">Supporto 2</button>
+      <button onclick="mettiSupporto(3)">Supporto 3</button>
+      <button onclick="mettiSupporto(4)">Supporto 4</button>
+      <button onclick="mettiSupporto(5)">Supporto 5</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">👥 Avversari (Solo Pubblico)</div>
+      <div id="playersArea"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="rightPanel">
+
+    <div class="panel">
+      <div class="title">💬 Chat Stanza</div>
+      <div id="chatArea"></div>
+      <input id="chatInput" placeholder="Scrivi un messaggio..." style="width:70%;">
+      <button onclick="inviaMessaggioChat()" class="greenBtn">Invia</button>
+    </div>
+
+    <div class="panel">
+      <div class="title">🗑️ Scarti (Privati)</div>
+      <button onclick="mostraScarti()" class="greenBtn">Mostra</button>
+      <button onclick="nascondiScarti()" class="redBtn">Nascondi</button>
+      <div class="cards" id="scarti"></div>
+    </div>
+
+  </div>
+
 </div>
 
-<div class="zone">
-  <div class="title">STANZA</div>
-  <input id="roomName" placeholder="Nome stanza">
-  <button onclick="joinRoom()">Entra / Crea stanza</button>
-  <div class="info" id="roomInfo">Non connesso</div>
-  <div class="info" id="playerCountInfo">Giocatori online: 0 / 9</div>
-</div>
-
-<div class="zone">
-  <div class="title">AZIONI HOST</div>
-  <button onclick="resetRoomForAll()" class="redBtn">RESET STANZA PER TUTTI</button>
-  <button onclick="pulisciLog()" class="redBtn">PULISCI LOG</button>
-  <div class="info" id="hostInfo">Host: No</div>
-</div>
-
-<div class="zone">
-  <div class="title">AZIONI MAZZO</div>
-  <button onclick="resetGioco()">Reset Mazzo (solo tuo)</button>
-  <button onclick="mescolaMazzo()">Mescola</button>
-  <button onclick="pesca(1)">Pesca 1</button>
-  <button onclick="pesca(5)">Pesca 5</button>
-  <input type="number" id="numPesca" min="1" value="2">
-  <button onclick="pescaN()">Pesca N</button>
-</div>
-
-<div class="zone">
-  <div class="title">SCARTA DAL MAZZO (SENZA VEDERE)</div>
-  <button onclick="scartaDalMazzo(1)">Scarta 1</button>
-  <input type="number" id="numScartaMazzo" min="1" value="2">
-  <button onclick="scartaDalMazzoN()">Scarta N</button>
-</div>
-
-<div class="zone">
-  <div class="title">AZIONI SELEZIONE (MULTI)</div>
-  <button onclick="azioneScarta()">Scarta</button>
-  <button onclick="azioneMano()">Rimetti in Mano</button>
-  <button onclick="azioneMazzoMescola()">Rimetti nel Mazzo (mescola)</button>
-  <button onclick="azioneCima()">Rimetti in Cima</button>
-  <button onclick="azioneFondo()">Rimetti in Fondo</button>
-  <button onclick="rimettiCasualeManoNelMazzo()">Casuale mano → mazzo + mescola</button>
-  <button onclick="rimettiCasualeScartiNelMazzo()">Casuale scarti → mazzo + mescola</button>
-  <button onclick="rimettiTuttiScartiNelMazzo()">Tutti scarti → mazzo + mescola</button>
-</div>
-
-<div class="info" id="contatori"></div>
-<div class="info" id="selezioneInfo"></div>
-
-<div class="zone">
-  <div class="title">PRIMARIA (PUBBLICA)</div>
-  <div class="cards" id="primaria"></div>
-  <button onclick="mettiPrimaria()">Metti Primaria (da mano)</button>
-</div>
-
-<div class="zone">
-  <div class="title">SUPPORTI (PUBBLICI)</div>
-  <div class="cards" id="supporti"></div>
-  <button onclick="mettiSupporto(2)">Supporto 2</button>
-  <button onclick="mettiSupporto(3)">Supporto 3</button>
-  <button onclick="mettiSupporto(4)">Supporto 4</button>
-  <button onclick="mettiSupporto(5)">Supporto 5</button>
-</div>
-
-<div class="zone">
-  <div class="title">MANO (PRIVATA)</div>
+<!-- HAND FIXED -->
+<div class="handPanel">
+  <div class="title">✋ Mano (Privata)</div>
   <div class="cards" id="mano"></div>
-</div>
-
-<div class="zone">
-  <div class="title">SCARTI (PRIVATI)</div>
-  <button onclick="mostraScarti()" class="greenBtn">Mostra Scarti</button>
-  <button onclick="nascondiScarti()" class="redBtn">Nascondi Scarti</button>
-  <div class="cards" id="scarti"></div>
-</div>
-
-<div class="playersBox">
-  <div class="title">GIOCATORI ONLINE</div>
-  <div id="playersList"></div>
-</div>
-
-<div class="playersBox">
-  <div class="title">📜 LOG MOSSE</div>
-  <div id="logArea" style="text-align:left; max-height:250px; overflow-y:auto; font-size:14px; color:#ccc;"></div>
-</div>
-
-<div class="playersBox">
-  <div class="title">💬 CHAT STANZA</div>
-  <div id="chatArea"></div>
-  <input id="chatInput" placeholder="Scrivi un messaggio...">
-  <button onclick="inviaChat()" class="greenBtn">Invia</button>
-</div>
-
-<div class="playersBox">
-  <div class="title">ALTRI GIOCATORI (VEDI SOLO PUBBLICO)</div>
-  <div id="playersArea"></div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, onDisconnect, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getDatabase, ref, set, get, onValue, onDisconnect, update, push, remove, query, limitToLast } 
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } 
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD0REuxzEW1j9jFBJTiTaT1g7ftAHkZmhg",
@@ -380,9 +520,6 @@
   let selezioni = [];
   let scartiVisibili = false;
 
-  let logsListenerStarted = false;
-  let chatListenerStarted = false;
-
   document.getElementById("nickname").value = nickname;
   document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
 
@@ -410,8 +547,8 @@
 
   async function aggiungiLog(testo){
     if(!roomId || !uid) return;
-
-    await push(ref(db, `rooms/${roomId}/logs`), {
+    const logRef = ref(db, `rooms/${roomId}/logs`);
+    await push(logRef, {
       testo: testo,
       nickname: nickname || "Sconosciuto",
       uid: uid,
@@ -419,45 +556,36 @@
     });
   }
 
-  async function inviaChat(){
+  async function inviaMessaggioChat(){
     if(!roomId || !uid){
-      alert("Entra in una stanza!");
+      alert("Non sei in una stanza!");
       return;
     }
 
-    const msg = document.getElementById("chatInput").value.trim();
-    if(!msg){
-      alert("Scrivi un messaggio!");
-      return;
-    }
+    const input = document.getElementById("chatInput");
+    const testo = input.value.trim();
+    if(!testo) return;
 
-    document.getElementById("chatInput").value = "";
+    input.value = "";
 
-    await push(ref(db, `rooms/${roomId}/chat`), {
-      testo: msg,
+    const chatRef = ref(db, `rooms/${roomId}/chat`);
+    await push(chatRef, {
+      testo: testo,
       nickname: nickname || "Sconosciuto",
       uid: uid,
       time: Date.now()
     });
   }
-  window.inviaChat = inviaChat;
+  window.inviaMessaggioChat = inviaMessaggioChat;
 
-  async function pulisciLog(){
-    if(!isHost){
-      alert("Solo host può pulire il log!");
-      return;
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      const el = document.getElementById("chatInput");
+      if(document.activeElement === el){
+        inviaMessaggioChat();
+      }
     }
-
-    await remove(ref(db, `rooms/${roomId}/logs`));
-
-    await push(ref(db, `rooms/${roomId}/logs`), {
-      testo: "ha pulito il LOG",
-      nickname: nickname || "Sconosciuto",
-      uid: uid,
-      time: Date.now()
-    });
-  }
-  window.pulisciLog = pulisciLog;
+  });
 
   function creaMazzo(){
     const suits = ["H","D","C","S"];
@@ -578,7 +706,7 @@
   function creaFace(v, sym, col){
     const box = document.createElement("div");
     box.className = "faceBox";
-    box.style.color = (col==="red") ? "#d00000" : "#000";
+    box.style.color = (col==="red") ? "#c00000" : "#000";
 
     const icon = document.createElement("div");
     icon.className = "icon";
@@ -731,6 +859,23 @@
     });
   }
 
+  async function hostTogglePrimaria(playerUid, scopri){
+    if(!isHost){
+      alert("Solo l'host può farlo!");
+      return;
+    }
+
+    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
+      primariaCoperta: !scopri
+    });
+
+    if(playerUid === uid){
+      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la propria PRIMARIA");
+    } else {
+      await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la PRIMARIA di un giocatore");
+    }
+  }
+
   function aggiornaUI(){
     document.getElementById("mano").innerHTML = "";
     document.getElementById("scarti").innerHTML = "";
@@ -755,31 +900,21 @@
       } else {
         document.getElementById("primaria").appendChild(creaCartaDiv(primaria,"primaria",0));
       }
+    }
 
-      if(isHost){
-        const btnShow = document.createElement("button");
-        btnShow.textContent = "Scopri Primaria";
-        btnShow.className = "greenBtn";
-        btnShow.onclick = async () => {
-          primariaCoperta = false;
-          await salvaPubblico();
-          await aggiungiLog("ha scoperto la propria PRIMARIA");
-          aggiornaUI();
-        };
+    if(isHost && primaria){
+      const btnShow = document.createElement("button");
+      btnShow.textContent = "Scopri Primaria";
+      btnShow.className = "greenBtn";
+      btnShow.onclick = () => hostTogglePrimaria(uid, true);
 
-        const btnHide = document.createElement("button");
-        btnHide.textContent = "Copri Primaria";
-        btnHide.className = "redBtn";
-        btnHide.onclick = async () => {
-          primariaCoperta = true;
-          await salvaPubblico();
-          await aggiungiLog("ha coperto la propria PRIMARIA");
-          aggiornaUI();
-        };
+      const btnHide = document.createElement("button");
+      btnHide.textContent = "Copri Primaria";
+      btnHide.className = "redBtn";
+      btnHide.onclick = () => hostTogglePrimaria(uid, false);
 
-        document.getElementById("primaria").appendChild(btnShow);
-        document.getElementById("primaria").appendChild(btnHide);
-      }
+      document.getElementById("primaria").appendChild(btnShow);
+      document.getElementById("primaria").appendChild(btnHide);
     }
 
     if(supporti[2]) document.getElementById("supporti").appendChild(creaCartaDiv(supporti[2],"sup2",0));
@@ -842,9 +977,7 @@
     aggiornaUI();
     await salvaTutto();
 
-    if(pescate > 0){
-      await aggiungiLog("ha pescato " + pescate + " carte");
-    }
+    if(pescate>0) await aggiungiLog("ha pescato " + pescate + " carte");
   }
 
   function pescaN(){
@@ -869,9 +1002,7 @@
     aggiornaUI();
     await salvaTutto();
 
-    if(scartate > 0){
-      await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
-    }
+    if(scartate>0) await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
   }
 
   function scartaDalMazzoN(){
@@ -1098,103 +1229,6 @@
     alert("Stanza resettata per tutti!");
   }
 
-  async function hostTogglePrimaria(playerUid, scopri){
-    if(!isHost){
-      alert("Solo host!");
-      return;
-    }
-
-    await update(ref(db, `rooms/${roomId}/public/${playerUid}`), {
-      primariaCoperta: !scopri
-    });
-
-    await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
-  }
-
-  function startLogsListener(){
-    if(logsListenerStarted) return;
-    logsListenerStarted = true;
-
-    onValue(ref(db, `rooms/${roomId}/logs`), (snap)=>{
-      const logArea = document.getElementById("logArea");
-      logArea.innerHTML = "";
-
-      if(!snap.exists()){
-        logArea.innerHTML = "<i>Nessuna mossa ancora...</i>";
-        return;
-      }
-
-      const logs = snap.val();
-      const keys = Object.keys(logs);
-
-      keys.sort((a,b)=>logs[a].time - logs[b].time);
-
-      for(const k of keys){
-        const l = logs[k];
-
-        const d = new Date(l.time);
-        const ora = d.toLocaleTimeString("it-IT");
-
-        const isHostPlayer = (hostUid && l.uid === hostUid);
-        const col = coloreDaUID(l.uid, isHostPlayer);
-        const crown = isHostPlayer ? " 👑" : "";
-
-        const div = document.createElement("div");
-        div.innerHTML = `
-          ⏱ <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
-          ${l.testo}
-        `;
-
-        logArea.appendChild(div);
-      }
-
-      logArea.scrollTop = logArea.scrollHeight;
-    });
-  }
-
-  function startChatListener(){
-    if(chatListenerStarted) return;
-    chatListenerStarted = true;
-
-    onValue(ref(db, `rooms/${roomId}/chat`), (snap)=>{
-      const chatArea = document.getElementById("chatArea");
-      chatArea.innerHTML = "";
-
-      if(!snap.exists()){
-        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
-        return;
-      }
-
-      const msgs = snap.val();
-      const keys = Object.keys(msgs);
-
-      keys.sort((a,b)=>msgs[a].time - msgs[b].time);
-
-      for(const k of keys){
-        const m = msgs[k];
-
-        const d = new Date(m.time);
-        const ora = d.toLocaleTimeString("it-IT");
-
-        const isHostPlayer = (hostUid && m.uid === hostUid);
-        const col = coloreDaUID(m.uid, isHostPlayer);
-        const crown = isHostPlayer ? " 👑" : "";
-
-        const div = document.createElement("div");
-        div.innerHTML = `
-          💬 <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: 
-          ${m.testo}
-        `;
-
-        chatArea.appendChild(div);
-      }
-
-      chatArea.scrollTop = chatArea.scrollHeight;
-    });
-  }
-
   async function joinRoom(){
     if(!uid){
       alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
@@ -1217,7 +1251,6 @@
       return;
     }
 
-    alreadyJoined = true;
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1231,10 +1264,8 @@
     }
 
     const meta = (await get(roomMetaRef)).val();
+    isHost = (meta.hostUid === uid);
     hostUid = meta.hostUid;
-    isHost = (hostUid === uid);
-
-    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI" : "NO");
 
     const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
     const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
@@ -1243,6 +1274,10 @@
       alert("Stanza piena (max 9 giocatori).");
       return;
     }
+
+    alreadyJoined = true;
+
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI 👑" : "NO");
 
     document.getElementById("roomInfo").innerHTML =
       "Connesso alla stanza: <b>" + roomId + "</b>";
@@ -1276,18 +1311,16 @@
     }
 
     await salvaPubblico();
+
     clearSelezione();
     aggiornaUI();
-
-    startLogsListener();
-    startChatListener();
 
     await aggiungiLog("è entrato nella stanza");
 
     onValue(ref(db, `rooms/${roomId}/public/${uid}`), (snap)=>{
       if(!snap.exists()) return;
-
       const pdata = snap.val();
+
       primaria = pdata.primaria || null;
       primariaCoperta = pdata.primariaCoperta ?? true;
       supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
@@ -1309,14 +1342,12 @@
 
       for(const pUid in all){
         const p = all[pUid];
-
         if(p.online) onlineCount++;
 
         const crown = (pUid === hostUid) ? " 👑" : "";
 
         const div = document.createElement("div");
         div.className = "info";
-
         div.innerHTML =
           "<b>" + p.nickname + crown + "</b> (" + pUid.substring(0,6) + ") - " +
           (p.online ? "<span class='online'>ONLINE</span>" : "<span class='offline'>OFFLINE</span>");
@@ -1326,6 +1357,78 @@
 
       document.getElementById("playerCountInfo").innerText =
         "Giocatori online: " + onlineCount + " / 9";
+    });
+
+    onValue(query(ref(db, `rooms/${roomId}/logs`), limitToLast(200)), (snap)=>{
+      const logArea = document.getElementById("logArea");
+      logArea.innerHTML = "";
+
+      if(!snap.exists()){
+        logArea.innerHTML = "<i>Nessuna mossa ancora...</i>";
+        return;
+      }
+
+      const logs = snap.val();
+      const keys = Object.keys(logs);
+      keys.sort((a,b)=>logs[a].time - logs[b].time);
+
+      for(const k of keys){
+        const l = logs[k];
+
+        const d = new Date(l.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (l.uid === hostUid);
+        const col = coloreDaUID(l.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          ⏱ <b>${ora}</b> - 
+          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
+          ${l.testo}
+        `;
+
+        logArea.appendChild(div);
+      }
+
+      logArea.scrollTop = logArea.scrollHeight;
+    });
+
+    onValue(query(ref(db, `rooms/${roomId}/chat`), limitToLast(200)), (snap)=>{
+      const chatArea = document.getElementById("chatArea");
+      chatArea.innerHTML = "";
+
+      if(!snap.exists()){
+        chatArea.innerHTML = "<i>Nessun messaggio...</i>";
+        return;
+      }
+
+      const chat = snap.val();
+      const keys = Object.keys(chat);
+      keys.sort((a,b)=>chat[a].time - chat[b].time);
+
+      for(const k of keys){
+        const m = chat[k];
+
+        const d = new Date(m.time);
+        const ora = d.toLocaleTimeString("it-IT");
+
+        const isHostPlayer = (m.uid === hostUid);
+        const col = coloreDaUID(m.uid, isHostPlayer);
+        const crown = isHostPlayer ? " 👑" : "";
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <b style="color:${col};">${m.nickname}${crown}</b>
+          <span style="color:#888;">(${ora})</span>:
+          <span style="color:white;">${m.testo}</span>
+        `;
+
+        chatArea.appendChild(div);
+      }
+
+      chatArea.scrollTop = chatArea.scrollHeight;
     });
 
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
