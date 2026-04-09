@@ -33,7 +33,6 @@
       overflow-x:hidden;
     }
 
-    /* speed lines manga */
     body::before{
       content:"";
       position:fixed;
@@ -52,7 +51,6 @@
       z-index:-2;
     }
 
-    /* comic dots */
     body::after{
       content:"";
       position:fixed;
@@ -73,7 +71,6 @@
       text-shadow: 0 0 14px rgba(255,216,107,0.35);
     }
 
-    /* layout tabellone */
     .board{
       display:grid;
       grid-template-columns: 1fr 1.35fr 1fr;
@@ -100,7 +97,6 @@
       overflow:hidden;
     }
 
-    /* vignette border style */
     .panel::before{
       content:"";
       position:absolute;
@@ -291,7 +287,6 @@
       opacity:0.95;
     }
 
-    /* card back manga */
     .cardBack{
       width:92px;
       height:135px;
@@ -337,7 +332,6 @@
       transform: translateY(-8px) scale(1.03);
     }
 
-    /* players public */
     .playerPublic{
       background: rgba(0,0,0,0.25);
       border:1px solid rgba(255,255,255,0.12);
@@ -389,7 +383,6 @@
       text-shadow: 0 0 10px rgba(255,75,75,0.35);
     }
 
-    /* log + chat */
     #logArea, #chatArea{
       background: rgba(0,0,0,0.35);
       border-radius:14px;
@@ -416,7 +409,6 @@
       max-width: 240px;
     }
 
-    /* avatar manga */
     .avatar{
       width:34px;
       height:34px;
@@ -433,7 +425,6 @@
       font-weight:bold;
     }
 
-    /* footer counters */
     .countersBox{
       margin-top:8px;
       font-weight:bold;
@@ -442,7 +433,6 @@
       font-size:14px;
     }
 
-    /* mini helper */
     .hint{
       font-size:12px;
       opacity:0.75;
@@ -456,7 +446,6 @@
 
 <div class="board">
 
-  <!-- LEFT COLUMN -->
   <div class="colLeft">
 
     <div class="panel">
@@ -511,7 +500,6 @@
 
   </div>
 
-  <!-- CENTER COLUMN -->
   <div class="colCenter">
 
     <div class="panel">
@@ -540,7 +528,6 @@
 
   </div>
 
-  <!-- RIGHT COLUMN -->
   <div class="colRight">
 
     <div class="panel">
@@ -603,7 +590,6 @@
 
 </div>
 
-<!-- BOTTOM ZONES -->
 <div class="board" style="grid-template-columns: 1fr; max-width: 1400px;">
   <div class="panel">
     <div class="title">✋ MANO (PRIVATA)</div>
@@ -660,7 +646,6 @@
   let selezioni = [];
   let scartiVisibili = false;
 
-  // ---------- SUONI (WebAudio, nessun file esterno) ----------
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let audioCtx = null;
 
@@ -687,9 +672,9 @@
   function soundReveal(){ playTone(1100, 0.08, "sine", 0.12); playTone(1400, 0.05, "sine", 0.10); }
   function soundClick(){ playTone(500, 0.03, "sine", 0.07); }
 
-  // ---------- PROFILO ----------
   document.getElementById("nickname").value = nickname;
   document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
+  document.getElementById("roomInfo").innerText = "Connessione a Firebase in corso...";
 
   function salvaNickname(){
     const n = document.getElementById("nickname").value.trim();
@@ -704,7 +689,6 @@
   }
   window.salvaNickname = salvaNickname;
 
-  // ---------- AVATAR MANGA SVG ----------
   function avatarSVG(seed){
     let hash = 0;
     for(let i=0;i<seed.length;i++){
@@ -748,7 +732,6 @@
     return div;
   }
 
-  // ---------- COLORE LOG ----------
   function coloreDaUID(uid, isHostPlayer){
     if(isHostPlayer) return "#ffd86b";
     let hash = 0;
@@ -759,7 +742,6 @@
     return `hsl(${hue}, 90%, 70%)`;
   }
 
-  // ---------- LOG ----------
   async function aggiungiLog(testo){
     if(!roomId || !uid) return;
     const logRef = ref(db, `rooms/${roomId}/logs`);
@@ -785,7 +767,6 @@
   }
   window.pulisciLog = pulisciLog;
 
-  // ---------- CHAT ----------
   async function inviaChat(){
     const txt = document.getElementById("chatInput").value.trim();
     if(!txt) return;
@@ -825,7 +806,6 @@
     }
   });
 
-  // ---------- MAZZO ----------
   function creaMazzo(){
     const suits = ["H","D","C","S"];
     const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -860,7 +840,6 @@
     return "black";
   }
 
-  // ---------- SELEZIONE ----------
   function stessaSelezione(zona,index){
     return selezioni.some(s => s.zona===zona && s.index===index);
   }
@@ -906,7 +885,6 @@
     return null;
   }
 
-  // ---------- CREAZIONE CARTE ----------
   function creaCorner(v, className){
     const corner = document.createElement("div");
     corner.className = "corner " + className;
@@ -1050,7 +1028,6 @@
     return div;
   }
 
-  // ---------- SALVATAGGI ----------
   async function salvaPrivato(){
     if(!roomId || !uid) return;
     await set(ref(db, `rooms/${roomId}/private/${uid}`), {
@@ -1102,7 +1079,6 @@
     });
   }
 
-  // ---------- UI ----------
   function aggiornaUI(){
     document.getElementById("mano").innerHTML = "";
     document.getElementById("scarti").innerHTML = "";
@@ -1184,7 +1160,7 @@
   }
   window.mostraScarti = mostraScarti;
   window.nascondiScarti = nascondiScarti;
-  // ---------- FUNZIONI GIOCO ----------
+
   async function resetGioco(){
     mazzo = creaMazzo();
     shuffle(mazzo);
@@ -1467,7 +1443,6 @@
     soundMescola();
   }
 
-  // ---------- RESET STANZA HOST ----------
   async function resetRoomForAll(){
     if(!roomId || !uid){
       alert("Non sei in una stanza!");
@@ -1510,7 +1485,6 @@
     soundMescola();
   }
 
-  // ---------- HOST TOGGLE PRIMARIA ALTRUI ----------
   async function hostTogglePrimaria(playerUid, scopri){
     if(!isHost){
       alert("Solo host!");
@@ -1527,10 +1501,9 @@
     else soundClick();
   }
 
-  // ---------- JOIN ROOM ----------
   async function joinRoom(){
     if(!uid){
-      alert("Non sei loggato ancora, aspetta 2 secondi e riprova.");
+      alert("Firebase non ha ancora completato il login anonimo. Aspetta 2 secondi e riprova.");
       return;
     }
 
@@ -1550,8 +1523,6 @@
       return;
     }
 
-    alreadyJoined = true;
-
     roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
     const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
@@ -1564,7 +1535,8 @@
       });
     }
 
-    const meta = (await get(roomMetaRef)).val();
+    const freshMetaSnap = await get(roomMetaRef);
+    const meta = freshMetaSnap.val();
     isHost = (meta.hostUid === uid);
     hostUid = meta.hostUid;
 
@@ -1577,6 +1549,8 @@
       alert("Stanza piena (max 9 giocatori).");
       return;
     }
+
+    alreadyJoined = true;
 
     document.getElementById("roomInfo").innerHTML =
       "Connesso alla stanza: <b>" + roomId + "</b>";
@@ -1616,7 +1590,6 @@
 
     await aggiungiLog("è entrato nella stanza");
 
-    // SYNC PUBBLICO PROPRIO
     onValue(ref(db, `rooms/${roomId}/public/${uid}`), (snap)=>{
       if(!snap.exists()) return;
 
@@ -1628,7 +1601,6 @@
       aggiornaUI();
     });
 
-    // PRESENCE
     onValue(ref(db, `rooms/${roomId}/presence`), (snap)=>{
       const list = document.getElementById("playersList");
       list.innerHTML = "";
@@ -1661,7 +1633,6 @@
         "Giocatori online: " + onlineCount + " / 9";
     });
 
-    // LOGS
     onValue(ref(db, `rooms/${roomId}/logs`), (snap)=>{
       const logArea = document.getElementById("logArea");
       logArea.innerHTML = "";
@@ -1676,7 +1647,6 @@
 
       keys.sort((a,b)=>logs[a].time - logs[b].time);
 
-      // limite 200 log
       const lastKeys = keys.slice(-200);
 
       for(const k of lastKeys){
@@ -1702,7 +1672,6 @@
       logArea.scrollTop = logArea.scrollHeight;
     });
 
-    // CHAT
     onValue(ref(db, `rooms/${roomId}/chat`), (snap)=>{
       const chatArea = document.getElementById("chatArea");
       chatArea.innerHTML = "";
@@ -1741,7 +1710,6 @@
       chatArea.scrollTop = chatArea.scrollHeight;
     });
 
-    // AVVERSARI
     onValue(ref(db, `rooms/${roomId}/public`), (snap)=>{
       const playersArea = document.getElementById("playersArea");
       playersArea.innerHTML = "";
@@ -1825,18 +1793,28 @@
     });
   }
 
-  // ---------- LOGIN ----------
-  signInAnonymously(auth);
+  signInAnonymously(auth)
+    .then(() => {
+      console.log("Login anonimo Firebase avviato");
+    })
+    .catch((error) => {
+      console.error("Errore login anonimo:", error);
+      document.getElementById("roomInfo").innerText = "Errore login: " + error.code;
+    });
 
   onAuthStateChanged(auth, (user)=>{
     if(user){
       uid = user.uid;
+      console.log("Utente loggato:", uid, "Anonimo:", user.isAnonymous);
       document.getElementById("roomInfo").innerText =
         "Loggato: " + uid.substring(0,8) + "... (inserisci nome stanza)";
+    } else {
+      uid = null;
+      console.log("Nessun utente loggato");
+      document.getElementById("roomInfo").innerText = "Non loggato";
     }
   });
 
-  // ---------- EXPORT FUNZIONI ----------
   window.joinRoom = joinRoom;
   window.resetGioco = resetGioco;
   window.mescolaMazzo = mescolaMazzo;
