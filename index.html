@@ -23,8 +23,8 @@
 
     body{
       margin:0;
-      font-family: "Trebuchet MS", Arial, sans-serif;
-      color: var(--txt);
+      font-family:"Trebuchet MS", Arial, sans-serif;
+      color:var(--txt);
       background:
         radial-gradient(circle at 20% 0%, rgba(255,79,216,0.14), transparent 45%),
         radial-gradient(circle at 80% 10%, rgba(57,213,255,0.14), transparent 45%),
@@ -56,7 +56,7 @@
       position:fixed;
       inset:0;
       background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
-      background-size: 14px 14px;
+      background-size:14px 14px;
       opacity:0.20;
       pointer-events:none;
       z-index:-1;
@@ -67,32 +67,30 @@
       text-align:center;
       font-size:22px;
       letter-spacing:1px;
-      color: var(--gold);
-      text-shadow: 0 0 14px rgba(255,216,107,0.35);
+      color:var(--gold);
+      text-shadow:0 0 14px rgba(255,216,107,0.35);
     }
 
     .board{
       display:grid;
-      grid-template-columns: 1fr 1.35fr 1fr;
+      grid-template-columns:1fr 1.35fr 1fr;
       gap:12px;
       padding:12px;
-      max-width: 1400px;
+      max-width:1400px;
       margin:0 auto;
     }
 
     @media(max-width:1100px){
-      .board{
-        grid-template-columns: 1fr;
-      }
+      .board{ grid-template-columns:1fr; }
     }
 
     .panel{
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
-      border: 1px solid var(--border);
+      background:linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid var(--border);
       border-radius:18px;
       padding:12px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.6);
-      backdrop-filter: blur(8px);
+      box-shadow:0 8px 18px rgba(0,0,0,0.6);
+      backdrop-filter:blur(8px);
       position:relative;
       overflow:hidden;
     }
@@ -103,12 +101,12 @@
       inset:0;
       border-radius:18px;
       padding:2px;
-      background: linear-gradient(135deg, rgba(255,79,216,0.35), rgba(57,213,255,0.35), rgba(255,216,107,0.25));
+      background:linear-gradient(135deg, rgba(255,79,216,0.35), rgba(57,213,255,0.35), rgba(255,216,107,0.25));
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
+      -webkit-mask-composite:xor;
+      mask-composite:exclude;
       pointer-events:none;
       opacity:0.8;
     }
@@ -116,15 +114,15 @@
     .title{
       font-weight:bold;
       font-size:14px;
-      color: var(--gold);
-      text-shadow: 0 0 10px rgba(255,216,107,0.25);
+      color:var(--gold);
+      text-shadow:0 0 10px rgba(255,216,107,0.25);
       margin-bottom:8px;
       letter-spacing:1px;
     }
 
     .info{
       font-size:13px;
-      color: var(--txt2);
+      color:var(--txt2);
       margin:5px 0;
       word-break:break-word;
     }
@@ -141,17 +139,17 @@
       padding:10px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,0.18);
-      background: rgba(0,0,0,0.35);
-      color: white;
+      background:rgba(0,0,0,0.35);
+      color:white;
       outline:none;
       width:170px;
       font-weight:bold;
       text-align:center;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+      box-shadow:inset 0 0 10px rgba(0,0,0,0.6);
     }
 
     input::placeholder{
-      color: rgba(255,255,255,0.45);
+      color:rgba(255,255,255,0.45);
     }
 
     button{
@@ -161,32 +159,39 @@
       font-weight:bold;
       cursor:pointer;
       color:white;
-      background: linear-gradient(180deg, rgba(255,79,216,0.95), rgba(170,50,255,0.9));
+      background:linear-gradient(180deg, rgba(255,79,216,0.95), rgba(170,50,255,0.9));
       border:1px solid rgba(255,255,255,0.20);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.55);
-      transition: 0.15s;
+      box-shadow:0 6px 14px rgba(0,0,0,0.55);
+      transition:0.15s;
       user-select:none;
     }
 
     button:hover{
-      transform: translateY(-2px) scale(1.04);
-      filter: brightness(1.1);
+      transform:translateY(-2px) scale(1.04);
+      filter:brightness(1.1);
     }
 
     button:active{
-      transform: scale(0.98);
+      transform:scale(0.98);
+    }
+
+    button:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+      transform:none !important;
+      filter:none !important;
     }
 
     button.redBtn{
-      background: linear-gradient(180deg, rgba(255,75,75,0.95), rgba(160,0,0,0.9));
+      background:linear-gradient(180deg, rgba(255,75,75,0.95), rgba(160,0,0,0.9));
     }
 
     button.greenBtn{
-      background: linear-gradient(180deg, rgba(55,255,156,0.95), rgba(0,140,90,0.9));
+      background:linear-gradient(180deg, rgba(55,255,156,0.95), rgba(0,140,90,0.9));
     }
 
     button.blueBtn{
-      background: linear-gradient(180deg, rgba(57,213,255,0.95), rgba(0,110,170,0.9));
+      background:linear-gradient(180deg, rgba(57,213,255,0.95), rgba(0,110,170,0.9));
     }
 
     button.smallBtn{
@@ -207,31 +212,31 @@
       width:92px;
       height:135px;
       border-radius:16px;
-      background: linear-gradient(180deg, #fffdf6, #efe7d0);
+      background:linear-gradient(180deg, #fffdf6, #efe7d0);
       border:2px solid rgba(0,0,0,0.15);
       cursor:pointer;
       position:relative;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.75);
+      box-shadow:0 8px 16px rgba(0,0,0,0.75);
       user-select:none;
       overflow:hidden;
-      transition: 0.16s;
-      animation: popIn 0.18s ease-out;
+      transition:0.16s;
+      animation:popIn 0.18s ease-out;
     }
 
     @keyframes popIn{
-      from{ transform: scale(0.85); opacity:0.4; }
-      to{ transform: scale(1); opacity:1; }
+      from{ transform:scale(0.85); opacity:0.4; }
+      to{ transform:scale(1); opacity:1; }
     }
 
     .card:hover{
-      transform: translateY(-6px) rotate(-1deg);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.8);
+      transform:translateY(-6px) rotate(-1deg);
+      box-shadow:0 10px 22px rgba(0,0,0,0.8);
     }
 
     .card.selected{
       border:3px solid var(--gold);
-      box-shadow: 0 0 22px rgba(255,216,107,0.9);
-      transform: translateY(-8px) scale(1.03);
+      box-shadow:0 0 22px rgba(255,216,107,0.9);
+      transform:translateY(-8px) scale(1.03);
     }
 
     .corner{
@@ -265,13 +270,13 @@
       height:90px;
       border-radius:14px;
       border:2px solid rgba(0,0,0,0.2);
-      background: linear-gradient(180deg, #fffdf6, #e8d9b8);
+      background:linear-gradient(180deg, #fffdf6, #e8d9b8);
       display:flex;
       flex-direction:column;
       justify-content:center;
       align-items:center;
       font-weight:bold;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.25);
+      box-shadow:inset 0 0 10px rgba(0,0,0,0.25);
     }
 
     .faceBox .icon{ font-size:30px; margin-bottom:6px; }
@@ -304,15 +309,15 @@
       border:2px solid rgba(255,255,255,0.22);
       cursor:pointer;
       position:relative;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.75);
+      box-shadow:0 8px 16px rgba(0,0,0,0.75);
       overflow:hidden;
       transition:0.16s;
-      animation: popIn 0.18s ease-out;
+      animation:popIn 0.18s ease-out;
     }
 
     .cardBack:hover{
-      transform: translateY(-6px);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.8);
+      transform:translateY(-6px);
+      box-shadow:0 10px 22px rgba(0,0,0,0.8);
     }
 
     .cardBack::after{
@@ -323,22 +328,22 @@
       transform:translate(-50%,-50%);
       font-size:64px;
       color:rgba(255,255,255,0.7);
-      text-shadow: 0 0 18px rgba(255,79,216,0.45);
+      text-shadow:0 0 18px rgba(255,79,216,0.45);
     }
 
     .cardBack.selected{
       border:3px solid var(--gold);
-      box-shadow: 0 0 22px rgba(255,216,107,0.9);
-      transform: translateY(-8px) scale(1.03);
+      box-shadow:0 0 22px rgba(255,216,107,0.9);
+      transform:translateY(-8px) scale(1.03);
     }
 
     .playerPublic{
-      background: rgba(0,0,0,0.25);
+      background:rgba(0,0,0,0.25);
       border:1px solid rgba(255,255,255,0.12);
       border-radius:16px;
       padding:10px;
       margin:10px 0;
-      box-shadow: inset 0 0 12px rgba(0,0,0,0.35);
+      box-shadow:inset 0 0 12px rgba(0,0,0,0.35);
     }
 
     .playerName{
@@ -347,14 +352,14 @@
       justify-content:center;
       gap:10px;
       font-weight:bold;
-      color: var(--accent2);
-      text-shadow: 0 0 10px rgba(57,213,255,0.25);
+      color:var(--accent2);
+      text-shadow:0 0 10px rgba(57,213,255,0.25);
       margin-bottom:6px;
     }
 
     .playerCounters{
       font-size:12px;
-      color: var(--txt2);
+      color:var(--txt2);
       margin-top:2px;
     }
 
@@ -372,28 +377,28 @@
     }
 
     .online{
-      color: var(--ok);
+      color:var(--ok);
       font-weight:bold;
-      text-shadow: 0 0 10px rgba(55,255,156,0.35);
+      text-shadow:0 0 10px rgba(55,255,156,0.35);
     }
 
     .offline{
-      color: var(--danger);
+      color:var(--danger);
       font-weight:bold;
-      text-shadow: 0 0 10px rgba(255,75,75,0.35);
+      text-shadow:0 0 10px rgba(255,75,75,0.35);
     }
 
     #logArea, #chatArea{
-      background: rgba(0,0,0,0.35);
+      background:rgba(0,0,0,0.35);
       border-radius:14px;
       padding:10px;
       border:1px solid rgba(255,255,255,0.12);
-      box-shadow: inset 0 0 12px rgba(0,0,0,0.55);
+      box-shadow:inset 0 0 12px rgba(0,0,0,0.55);
       max-height:240px;
       overflow-y:auto;
       text-align:left;
       font-size:13px;
-      color: var(--txt2);
+      color:var(--txt2);
     }
 
     .chatRow{
@@ -405,8 +410,8 @@
     }
 
     #chatInput{
-      width: 100%;
-      max-width: 240px;
+      width:100%;
+      max-width:240px;
     }
 
     .avatar{
@@ -414,22 +419,16 @@
       height:34px;
       border-radius:50%;
       border:2px solid rgba(255,255,255,0.25);
-      box-shadow: 0 0 12px rgba(0,0,0,0.65);
+      box-shadow:0 0 12px rgba(0,0,0,0.65);
       overflow:hidden;
       flex-shrink:0;
-    }
-
-    .badgeHost{
-      color: var(--gold);
-      text-shadow: 0 0 10px rgba(255,216,107,0.4);
-      font-weight:bold;
     }
 
     .countersBox{
       margin-top:8px;
       font-weight:bold;
-      color: var(--gold);
-      text-shadow: 0 0 10px rgba(255,216,107,0.2);
+      color:var(--gold);
+      text-shadow:0 0 10px rgba(255,216,107,0.2);
       font-size:14px;
     }
 
@@ -461,9 +460,9 @@
       <div class="title">🏰 STANZA</div>
       <div class="row">
         <input id="roomName" placeholder="Nome stanza">
-        <button onclick="joinRoom()">Entra / Crea</button>
+        <button id="joinBtn" onclick="joinRoom()" disabled>Attendi login...</button>
       </div>
-      <div class="info" id="roomInfo">Non connesso</div>
+      <div class="info" id="roomInfo">Connessione a Firebase in corso...</div>
       <div class="info" id="playerCountInfo">Giocatori online: 0 / 9</div>
     </div>
 
@@ -487,14 +486,11 @@
       <div class="row">
         <button onclick="pulisciChat()" class="redBtn smallBtn">Pulisci Chat</button>
       </div>
-
       <div id="chatArea"></div>
-
       <div class="chatRow">
         <input id="chatInput" placeholder="Scrivi messaggio...">
         <button onclick="inviaChat()" class="blueBtn">Invia</button>
       </div>
-
       <div class="hint">Invio rapido: premi ENTER.</div>
     </div>
 
@@ -587,10 +583,9 @@
     </div>
 
   </div>
-
 </div>
 
-<div class="board" style="grid-template-columns: 1fr; max-width: 1400px;">
+<div class="board" style="grid-template-columns:1fr; max-width:1400px;">
   <div class="panel">
     <div class="title">✋ MANO (PRIVATA)</div>
     <div class="cards" id="mano"></div>
@@ -613,17 +608,16 @@
   import { getDatabase, ref, set, get, onValue, onDisconnect, update, push } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  
   const firebaseConfig = {
-  apiKey: "AIzaSyD99frfGysAM35bvT21XF7Irv9s3DkfU9w",
-  authDomain: "carteweb-80275.firebaseapp.com",
-  databaseURL: "https://carteweb-80275-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "carteweb-80275",
-  storageBucket: "carteweb-80275.firebasestorage.app",
-  messagingSenderId: "551833622438",
-  appId: "1:551833622438:web:a9f2697db6862560576167",
-  measurementId: "G-X3ZSV25SSE"
-};
+    apiKey: "AIzaSyD99frfGysAM35bvT21XF7Irv9s3DkfU9w",
+    authDomain: "carteweb-80275.firebaseapp.com",
+    databaseURL: "https://carteweb-80275-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "carteweb-80275",
+    storageBucket: "carteweb-80275.firebasestorage.app",
+    messagingSenderId: "551833622438",
+    appId: "1:551833622438:web:a9f2697db6862560576167",
+    measurementId: "G-X3ZSV25SSE"
+  };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
@@ -636,6 +630,7 @@
   let isHost = false;
   let alreadyJoined = false;
   let hostUid = null;
+  let firebaseReady = false;
 
   let mazzo = [];
   let mano = [];
@@ -646,6 +641,9 @@
 
   let selezioni = [];
   let scartiVisibili = false;
+
+  const joinBtn = document.getElementById("joinBtn");
+  const roomInfoEl = document.getElementById("roomInfo");
 
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let audioCtx = null;
@@ -675,7 +673,6 @@
 
   document.getElementById("nickname").value = nickname;
   document.getElementById("nickInfo").innerText = nickname ? ("Nickname: " + nickname) : "Nickname non impostato";
-  document.getElementById("roomInfo").innerText = "Connessione a Firebase in corso...";
 
   function salvaNickname(){
     const n = document.getElementById("nickname").value.trim();
@@ -697,10 +694,8 @@
     }
     const hue = Math.abs(hash) % 360;
     const hairHue = (hue + 40) % 360;
-
     const eye = (Math.abs(hash) % 3);
     const mouth = (Math.abs(hash) % 3);
-
     const eyeY = eye === 0 ? 16 : (eye === 1 ? 15 : 17);
     const mouthY = mouth === 0 ? 26 : (mouth === 1 ? 27 : 25);
 
@@ -770,11 +765,9 @@
 
   async function inviaChat(){
     const txt = document.getElementById("chatInput").value.trim();
-    if(!txt) return;
-    if(!roomId || !uid) return;
+    if(!txt || !roomId || !uid) return;
 
     document.getElementById("chatInput").value = "";
-
     const chatRef = ref(db, `rooms/${roomId}/chat`);
     await push(chatRef, {
       testo: txt,
@@ -782,7 +775,6 @@
       uid,
       time: Date.now()
     });
-
     soundClick();
   }
   window.inviaChat = inviaChat;
@@ -802,18 +794,16 @@
   window.pulisciChat = pulisciChat;
 
   document.getElementById("chatInput").addEventListener("keydown", (e)=>{
-    if(e.key === "Enter"){
-      inviaChat();
-    }
+    if(e.key === "Enter") inviaChat();
   });
 
   function creaMazzo(){
     const suits = ["H","D","C","S"];
     const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
     const m = [];
-    for(let s of suits){
-      for(let v of values){
-        m.push({ valore: v, seme: s });
+    for(const s of suits){
+      for(const v of values){
+        m.push({ valore:v, seme:s });
       }
     }
     return m;
@@ -837,8 +827,7 @@
   }
 
   function coloreClasse(seme){
-    if(seme==="H" || seme==="D") return "red";
-    return "black";
+    return (seme==="H" || seme==="D") ? "red" : "black";
   }
 
   function stessaSelezione(zona,index){
@@ -915,12 +904,10 @@
       9: [[30,26,0],[70,26,0],[30,48,0],[70,48,0],[30,70,180],[70,70,180],[50,37,0],[50,60,180],[50,54,0]],
       10:[[30,24,0],[70,24,0],[30,42,0],[70,42,0],[30,60,180],[70,60,180],[30,78,180],[70,78,180],[50,33,0],[50,69,180]]
     };
-
     const pts = layouts[valore];
     if(!pts) return;
-
-    for(let i=0;i<pts.length;i++){
-      div.appendChild(creaPip(sym, pts[i][0], pts[i][1], pts[i][2]));
+    for(const p of pts){
+      div.appendChild(creaPip(sym, p[0], p[1], p[2]));
     }
   }
 
@@ -931,7 +918,6 @@
 
     const icon = document.createElement("div");
     icon.className = "icon";
-
     if(v==="J") icon.textContent = "⚔";
     if(v==="Q") icon.textContent = "♛";
     if(v==="K") icon.textContent = "♚";
@@ -959,14 +945,10 @@
 
     const div = document.createElement("div");
     div.className = "card " + col;
-
     if(small) div.classList.add("smallCard");
 
     if(zona!=="x"){
-      if(stessaSelezione(zona,index)){
-        div.classList.add("selected");
-      }
-
+      if(stessaSelezione(zona,index)) div.classList.add("selected");
       div.onclick = function(){
         toggleSelezione(zona,index);
         aggiornaUI();
@@ -999,15 +981,12 @@
       big.className = "aceBig";
       big.textContent = sym;
       div.appendChild(big);
-
       div.appendChild(creaPip(sym, 50, 32, 0));
       div.appendChild(creaPip(sym, 50, 78, 180));
       return div;
     }
 
-    const num = parseInt(v);
-    aggiungiPips(div, num, sym);
-
+    aggiungiPips(div, parseInt(v), sym);
     return div;
   }
 
@@ -1016,10 +995,7 @@
     div.className = "cardBack";
 
     if(clickable && zona){
-      if(stessaSelezione(zona,index)){
-        div.classList.add("selected");
-      }
-
+      if(stessaSelezione(zona,index)) div.classList.add("selected");
       div.onclick = function(){
         toggleSelezione(zona,index);
         aggiornaUI();
@@ -1031,14 +1007,11 @@
 
   async function salvaPrivato(){
     if(!roomId || !uid) return;
-    await set(ref(db, `rooms/${roomId}/private/${uid}`), {
-      mazzo, mano, scarti
-    });
+    await set(ref(db, `rooms/${roomId}/private/${uid}`), { mazzo, mano, scarti });
   }
 
   async function salvaPubblico(){
     if(!roomId || !uid) return;
-
     await update(ref(db, `rooms/${roomId}/public/${uid}`), {
       primaria,
       primariaCoperta,
@@ -1132,7 +1105,6 @@
         row.className = "row";
         row.appendChild(btnShow);
         row.appendChild(btnHide);
-
         document.getElementById("primaria").appendChild(row);
       }
     }
@@ -1154,11 +1126,13 @@
     aggiornaUI();
     soundClick();
   }
+
   function nascondiScarti(){
     scartiVisibili = false;
     aggiornaUI();
     soundClick();
   }
+
   window.mostraScarti = mostraScarti;
   window.nascondiScarti = nascondiScarti;
 
@@ -1188,7 +1162,6 @@
 
   async function pesca(n){
     let pescate = 0;
-
     for(let i=0;i<n;i++){
       if(mazzo.length===0){
         alert("Mazzo vuoto!");
@@ -1197,11 +1170,9 @@
       mano.push(mazzo.shift());
       pescate++;
     }
-
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
-
     if(pescate>0){
       await aggiungiLog("ha pescato " + pescate + " carte");
       soundPesca();
@@ -1216,7 +1187,6 @@
 
   async function scartaDalMazzo(n){
     let scartate = 0;
-
     for(let i=0;i<n;i++){
       if(mazzo.length===0){
         alert("Mazzo vuoto!");
@@ -1225,11 +1195,9 @@
       scarti.push(mazzo.shift());
       scartate++;
     }
-
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
-
     if(scartate>0){
       await aggiungiLog("ha scartato " + scartate + " carte dal mazzo (senza vedere)");
       soundScarta();
@@ -1249,7 +1217,6 @@
     }
 
     const idx = selezioni[0].index;
-
     if(primaria) mano.push(primaria);
     primaria = mano.splice(idx,1)[0];
     primariaCoperta = true;
@@ -1268,7 +1235,6 @@
     }
 
     const idx = selezioni[0].index;
-
     if(supporti[n]) mano.push(supporti[n]);
     supporti[n] = mano.splice(idx,1)[0];
 
@@ -1336,7 +1302,6 @@
     }
 
     shuffle(mazzo);
-
     clearSelezione();
     aggiornaUI();
     await salvaTutto();
@@ -1391,10 +1356,8 @@
       alert("Non hai carte in mano!");
       return;
     }
-
     const idx = Math.floor(Math.random()*mano.length);
     const c = mano.splice(idx,1)[0];
-
     mazzo.push(c);
     shuffle(mazzo);
 
@@ -1410,10 +1373,8 @@
       alert("Non hai scarti!");
       return;
     }
-
     const idx = Math.floor(Math.random()*scarti.length);
     const c = scarti.splice(idx,1)[0];
-
     mazzo.push(c);
     shuffle(mazzo);
 
@@ -1429,11 +1390,7 @@
       alert("Non hai scarti!");
       return;
     }
-
-    for(const c of scarti){
-      mazzo.push(c);
-    }
-
+    for(const c of scarti) mazzo.push(c);
     scarti = [];
     shuffle(mazzo);
 
@@ -1449,7 +1406,6 @@
       alert("Non sei in una stanza!");
       return;
     }
-
     if(!isHost){
       alert("Solo l'host può resettare la stanza!");
       return;
@@ -1497,13 +1453,12 @@
     });
 
     await aggiungiLog("ha " + (scopri ? "scoperto" : "coperto") + " la primaria di un giocatore");
-
     if(scopri) soundReveal();
     else soundClick();
   }
 
   async function joinRoom(){
-    if(!uid){
+    if(!firebaseReady || !uid){
       alert("Firebase non ha ancora completato il login anonimo. Aspetta 2 secondi e riprova.");
       return;
     }
@@ -1524,9 +1479,9 @@
       return;
     }
 
-    roomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const newRoomId = name.replace(/[^a-zA-Z0-9_-]/g, "_");
 
-    const roomMetaRef = ref(db, `rooms/${roomId}/meta`);
+    const roomMetaRef = ref(db, `rooms/${newRoomId}/meta`);
     const roomMetaSnap = await get(roomMetaRef);
 
     if(!roomMetaSnap.exists()){
@@ -1536,14 +1491,11 @@
       });
     }
 
-    const freshMetaSnap = await get(roomMetaRef);
-    const meta = freshMetaSnap.val();
-    isHost = (meta.hostUid === uid);
-    hostUid = meta.hostUid;
+    const metaSnap2 = await get(roomMetaRef);
+    const meta = metaSnap2.val();
+    const newHostUid = meta.hostUid;
 
-    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI 👑" : "NO");
-
-    const pubSnap = await get(ref(db, `rooms/${roomId}/public`));
+    const pubSnap = await get(ref(db, `rooms/${newRoomId}/public`));
     const players = pubSnap.exists() ? Object.keys(pubSnap.val()).length : 0;
 
     if(players >= 9 && (!pubSnap.exists() || !pubSnap.val()[uid])){
@@ -1551,10 +1503,13 @@
       return;
     }
 
+    roomId = newRoomId;
+    hostUid = newHostUid;
+    isHost = (hostUid === uid);
     alreadyJoined = true;
 
-    document.getElementById("roomInfo").innerHTML =
-      "Connesso alla stanza: <b>" + roomId + "</b>";
+    document.getElementById("hostInfo").innerText = "Host: " + (isHost ? "SI 👑" : "NO");
+    document.getElementById("roomInfo").innerHTML = "Connesso alla stanza: <b>" + roomId + "</b>";
 
     salvaPresenza();
 
@@ -1562,7 +1517,10 @@
     const myPrivSnap = await get(myPrivRef);
 
     if(!myPrivSnap.exists()){
-      await resetGioco();
+      mazzo = creaMazzo();
+      shuffle(mazzo);
+      mano = [];
+      scarti = [];
     } else {
       const data = myPrivSnap.val();
       mazzo = data.mazzo || [];
@@ -1584,21 +1542,17 @@
       supporti = {2:null,3:null,4:null,5:null};
     }
 
-    await salvaPubblico();
-
+    await salvaTutto();
     clearSelezione();
     aggiornaUI();
-
     await aggiungiLog("è entrato nella stanza");
 
     onValue(ref(db, `rooms/${roomId}/public/${uid}`), (snap)=>{
       if(!snap.exists()) return;
-
       const pdata = snap.val();
       primaria = pdata.primaria || null;
       primariaCoperta = pdata.primariaCoperta ?? true;
       supporti = pdata.supporti || {2:null,3:null,4:null,5:null};
-
       aggiornaUI();
     });
 
@@ -1622,11 +1576,9 @@
 
         const div = document.createElement("div");
         div.className = "info";
-
         div.innerHTML =
           "<b>" + p.nickname + crown + "</b> (" + pUid.substring(0,6) + ") - " +
           (p.online ? "<span class='online'>ONLINE</span>" : "<span class='offline'>OFFLINE</span>");
-
         list.appendChild(div);
       }
 
@@ -1644,29 +1596,18 @@
       }
 
       const logs = snap.val();
-      const keys = Object.keys(logs);
+      const keys = Object.keys(logs).sort((a,b)=>logs[a].time - logs[b].time).slice(-200);
 
-      keys.sort((a,b)=>logs[a].time - logs[b].time);
-
-      const lastKeys = keys.slice(-200);
-
-      for(const k of lastKeys){
+      for(const k of keys){
         const l = logs[k];
-
         const d = new Date(l.time);
         const ora = d.toLocaleTimeString("it-IT");
-
         const isHostPlayer = (l.uid === hostUid);
         const col = coloreDaUID(l.uid, isHostPlayer);
         const crown = isHostPlayer ? " 👑" : "";
 
         const div = document.createElement("div");
-        div.innerHTML = `
-          ⏱ <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: 
-          ${l.testo}
-        `;
-
+        div.innerHTML = `⏱ <b>${ora}</b> - <span style="color:${col}; font-weight:bold;">${l.nickname}${crown}</span>: ${l.testo}`;
         logArea.appendChild(div);
       }
 
@@ -1683,28 +1624,18 @@
       }
 
       const msgs = snap.val();
-      const keys = Object.keys(msgs);
-      keys.sort((a,b)=>msgs[a].time - msgs[b].time);
+      const keys = Object.keys(msgs).sort((a,b)=>msgs[a].time - msgs[b].time).slice(-200);
 
-      const lastKeys = keys.slice(-200);
-
-      for(const k of lastKeys){
+      for(const k of keys){
         const m = msgs[k];
-
         const d = new Date(m.time);
         const ora = d.toLocaleTimeString("it-IT");
-
         const isHostPlayer = (m.uid === hostUid);
         const col = coloreDaUID(m.uid, isHostPlayer);
         const crown = isHostPlayer ? " 👑" : "";
 
         const div = document.createElement("div");
-        div.innerHTML = `
-          💬 <b>${ora}</b> - 
-          <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: 
-          ${m.testo}
-        `;
-
+        div.innerHTML = `💬 <b>${ora}</b> - <span style="color:${col}; font-weight:bold;">${m.nickname}${crown}</span>: ${m.testo}`;
         chatArea.appendChild(div);
       }
 
@@ -1723,13 +1654,11 @@
         if(playerUid === uid) continue;
 
         const pdata = all[playerUid];
-
         const box = document.createElement("div");
         box.className = "playerPublic";
 
         const nm = document.createElement("div");
         nm.className = "playerName";
-
         const nome = pdata.nickname ? pdata.nickname : ("Giocatore " + playerUid.substring(0,6));
         const crown = (playerUid === hostUid) ? " 👑" : "";
 
@@ -1748,9 +1677,7 @@
 
         const counters = document.createElement("div");
         counters.className = "playerCounters";
-        counters.innerHTML = `
-          Mazzo: <b>${cMazzo}</b> | Mano: <b>${cMano}</b> | Scarti: <b>${cScarti}</b>
-        `;
+        counters.innerHTML = `Mazzo: <b>${cMazzo}</b> | Mano: <b>${cMano}</b> | Scarti: <b>${cScarti}</b>`;
 
         box.appendChild(nm);
         box.appendChild(counters);
@@ -1794,27 +1721,36 @@
     });
   }
 
-  signInAnonymously(auth)
-    .then(() => {
-      console.log("Login anonimo Firebase avviato");
-    })
-    .catch((error) => {
-      console.error("Errore login anonimo:", error);
-      document.getElementById("roomInfo").innerText = "Errore login: " + error.code;
-    });
+  async function startAnonymousLogin(){
+    try{
+      roomInfoEl.innerText = "Connessione a Firebase in corso...";
+      await signInAnonymously(auth);
+    }catch(err){
+      console.error("Errore login anonimo Firebase:", err);
+      roomInfoEl.innerText = "Errore login: " + (err?.code || err?.message || "sconosciuto");
+      joinBtn.disabled = true;
+      joinBtn.innerText = "Login fallito";
+      alert("Errore login Firebase: " + (err?.code || err?.message || "sconosciuto"));
+    }
+  }
 
   onAuthStateChanged(auth, (user)=>{
     if(user){
       uid = user.uid;
-      console.log("Utente loggato:", uid, "Anonimo:", user.isAnonymous);
-      document.getElementById("roomInfo").innerText =
-        "Loggato: " + uid.substring(0,8) + "... (inserisci nome stanza)";
+      firebaseReady = true;
+      joinBtn.disabled = false;
+      joinBtn.innerText = "Entra / Crea";
+      roomInfoEl.innerText = "Loggato: " + uid.substring(0,8) + "... (inserisci nome stanza)";
     } else {
       uid = null;
-      console.log("Nessun utente loggato");
-      document.getElementById("roomInfo").innerText = "Non loggato";
+      firebaseReady = false;
+      joinBtn.disabled = true;
+      joinBtn.innerText = "Attendi login...";
+      roomInfoEl.innerText = "Non connesso a Firebase";
     }
   });
+
+  startAnonymousLogin();
 
   window.joinRoom = joinRoom;
   window.resetGioco = resetGioco;
